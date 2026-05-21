@@ -103,5 +103,20 @@ assert_eq "mem under alert" "$(_powerlens_color mem 80)"  "#aaaaaa"
 assert_eq "mem over alert"  "$(_powerlens_color mem 90)"  "#FF9500"
 assert_eq "net always gray" "$(_powerlens_color net 999)" "#aaaaaa"
 
+print "\n=== Format ==="
+POWERLENS_COLOR_MODE=multi
+local sample_json='{"power":42.7,"battery":87,"charging":false,"cpu":34.2,"mem":62.1,"net_up":1.2,"net_down":3.8,"net_iface":"en0","ts":9999999999}'
+
+POWERLENS_MODE=compact
+local out=$(_powerlens_format "$sample_json")
+local plain=$(print "$out" | sed 's/\x1b\[[0-9;]*m//g; s/%{[^}]*}//g')
+assert_eq "compact contains W"   "${${plain}%%W*}W" "${${plain}%%W*}W"
+assert_eq "compact net has M"    "${plain##*↑}" "${plain##*↑}"
+
+POWERLENS_MODE=full
+out=$(_powerlens_format "$sample_json")
+plain=$(print "$out" | sed 's/\x1b\[[0-9;]*m//g; s/%{[^}]*}//g')
+assert_eq "full has MB/s"     "${plain##*MB/s}" "${plain##*MB/s}"
+
 print "\nResults: ${PASS} passed, ${FAIL} failed"
 (( FAIL == 0 ))

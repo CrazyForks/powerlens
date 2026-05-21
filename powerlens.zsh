@@ -137,6 +137,79 @@ _powerlens_wrap() {
     print -n "%{\e[38;2;${r};${g};${b}m%}${text}%{\e[0m%}"
 }
 
+# Format a number: compact removes decimals, full keeps 1 decimal place.
+_powerlens_fmt_num() {
+    local val=$1
+    if [[ "$POWERLENS_MODE" == "compact" ]]; then
+        printf "%.0f" "$val"
+    else
+        printf "%.1f" "$val"
+    fi
+}
+
+# Format MB/s value: compact → "1.2M", full → "1.2MB/s"
+_powerlens_fmt_net() {
+    local val=$1
+    if [[ "$POWERLENS_MODE" == "compact" ]]; then
+        printf "%.1fM" "$val"
+    else
+        printf "%.1fMB/s" "$val"
+    fi
+}
+
+# Format all metrics from JSON into a colored RPROMPT string.
+_powerlens_format() {
+    local json=$1
+    local power battery charging cpu mem net_up net_down
+    power=$(_powerlens_jget "$json" "power")
+    battery=$(_powerlens_jget "$json" "battery")
+    charging=$(_powerlens_jget "$json" "charging")
+    cpu=$(_powerlens_jget "$json" "cpu")
+    mem=$(_powerlens_jget "$json" "mem")
+    net_up=$(_powerlens_jget "$json" "net_up")
+    net_down=$(_powerlens_jget "$json" "net_down")
+
+    local sep=" "
+    local result=""
+
+    # ⚡ Power
+    local pc=$(_powerlens_color power ${power%%.*})
+    result+="$(_powerlens_wrap $pc "⚡$(_powerlens_fmt_num $power)W")"
+
+    # 🔋 Battery (follows power color)
+    if [[ "$POWERLENS_SHOW_BATTERY" == "true" ]]; then
+        local icon="🔋"
+        [[ "$charging" == "true" ]] && icon="🔌"
+        result+="${sep}$(_powerlens_wrap $pc "${icon}${battery}%")"
+    fi
+
+    # ⚙ CPU
+    if [[ "$POWERLENS_SHOW_CPU" == "true" ]]; then
+        local cc=$(_powerlens_color cpu ${cpu%%.*})
+        result+="${sep}$(_powerlens_wrap $cc "⚙$(_powerlens_fmt_num $cpu)%")"
+    fi
+
+    # 🧠 Memory
+    if [[ "$POWERLENS_SHOW_MEM" == "true" ]]; then
+        local mc=$(_powerlens_color mem ${mem%%.*})
+        result+="${sep}$(_powerlens_wrap $mc "🧠$(_powerlens_fmt_num $mem)%")"
+    fi
+
+    # ↑↓ Network
+    if [[ "$POWERLENS_SHOW_NET" == "true" ]]; then
+        local nc=$(_powerlens_color net 0)
+        local net_str
+        if [[ "$POWERLENS_MODE" == "compact" ]]; then
+            net_str="↑$(_powerlens_fmt_net $net_up)↓$(_powerlens_fmt_net $net_down)"
+        else
+            net_str="↑ $(_powerlens_fmt_net $net_up)  ↓ $(_powerlens_fmt_net $net_down)"
+        fi
+        result+="${sep}$(_powerlens_wrap $nc "$net_str")"
+    fi
+
+    print -n "$result"
+}
+
 # Entry point called by plugin.zsh after sourcing
 _powerlens_init() {
     if _powerlens_is_ssh; then
