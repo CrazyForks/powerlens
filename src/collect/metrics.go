@@ -11,6 +11,7 @@ type Metrics struct {
 	Power    float64 `json:"power"`
 	Battery  int     `json:"battery"`
 	Charging bool    `json:"charging"`
+	CpuTemp  float64 `json:"cpu_temp"` // °C; -1 = unavailable
 	CPU      float64 `json:"cpu"`
 	Mem      float64 `json:"mem"`
 	NetUp    float64 `json:"net_up"`
