@@ -215,10 +215,20 @@ _powerlens_zle_line_finish() {
     zle reset-prompt
 }
 
+# Fires every TMOUT seconds while user is idle at the prompt.
+# Only redraws when ZLE is active; TMOUT is preserved if already set smaller.
+TRAPALRM() {
+    [[ -n "$ZLE_STATE" ]] && { _powerlens_update_rprompt; zle reset-prompt }
+}
+
 # Entry point called by plugin.zsh after sourcing
 _powerlens_init() {
     _powerlens_start_daemon
     precmd() { _powerlens_update_rprompt }
     zshexit() { _powerlens_stop_daemon }
     zle -N zle-line-finish _powerlens_zle_line_finish
+    # Trigger TRAPALRM at the refresh interval; honour a smaller existing TMOUT
+    if (( ${TMOUT:-0} == 0 || ${TMOUT:-0} > POWERLENS_REFRESH )); then
+        TMOUT=$POWERLENS_REFRESH
+    fi
 }
