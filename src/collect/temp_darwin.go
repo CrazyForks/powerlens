@@ -84,7 +84,7 @@ double getCPUDieTemp() {
 	              | ((uint32_t)'7' <<  8) | (uint32_t)'8';
 
 	const char *keys[] = {"TC0D", "TC0P", "TC0F", NULL};
-	for (int k = 0; keys[k] && temp < 0; k++) {
+	for (int k = 0; keys[k] && temp < 0; k++) { // temp<0 means "not yet read"; 0°C is a valid exit
 		SMCKeyData_t in = {0}, out = {0};
 		in.key   = smcKey(keys[k]);
 		in.data8 = SMC_CMD_READ_KEYINFO;
