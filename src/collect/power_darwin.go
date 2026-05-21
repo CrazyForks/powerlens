@@ -61,17 +61,16 @@ import (
 	"strings"
 )
 
-// GetPower returns system power draw (W), battery percent, and charging state.
-// On systems with no battery, battery is returned as -1 and err is nil.
-// Power is measured via powermetrics (requires sudo on Intel) with ioreg fallback.
-func GetPower() (watts float64, battery int, charging bool, err error) {
-	// Battery % and charging state via IOKit
+// GetPowerAndTemp returns system power draw (W), battery %, charging state,
+// and CPU die temperature (°C, or -1 if unavailable). A single powermetrics
+// call feeds both watts and temperature parsing on Apple Silicon; Intel uses
+// the SMC fallback inside GetCPUTemp.
+func GetPowerAndTemp() (watts float64, battery int, charging bool, tempC float64, err error) {
 	b := C.getBatteryCurrentCapacity()
 	battery = int(b)
 	charging = C.isCharging() != 0
+	tempC = -1
 
-	// CPU package power via powermetrics (1 sample, 100ms window)
-	// Note: requires sudo on Intel Mac; works without sudo on Apple Silicon.
 	out, e := exec.Command(
 		"powermetrics",
 		"--samplers", "cpu_power",
@@ -80,16 +79,18 @@ func GetPower() (watts float64, battery int, charging bool, err error) {
 		"--format", "plist",
 	).Output()
 	if e != nil {
-		// Fallback: estimate from PowerTelemetryData via ioreg
 		watts = batteryFallbackWatts()
+		tempC = GetCPUTemp("") // Intel SMC path
 		return
 	}
-	w := parsePowermetricsWatts(string(out))
+	plist := string(out)
+	w := parsePowermetricsWatts(plist)
 	if w >= 0 {
 		watts = w
 	} else {
 		watts = batteryFallbackWatts()
 	}
+	tempC = GetCPUTemp(plist)
 	return
 }
 
