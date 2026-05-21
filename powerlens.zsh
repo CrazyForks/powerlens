@@ -13,7 +13,7 @@ fi
 
 # Degraded RPROMPT — all values shown as --
 _powerlens_degraded() {
-    _powerlens_wrap "#444444" "⚡ --W 🔋 --% ⚙ --% 🧠 --% ↑ -- ↓ --"
+    _powerlens_wrap "#444444" "⚡ --W 🔋 --% ⚙ --% 🌡 --° 🧠 --% ↑ -- ↓ --"
 }
 
 _powerlens_start_daemon() {
@@ -105,6 +105,7 @@ _powerlens_color() {
             power) threshold=$POWERLENS_ALERT_POWER ;;
             cpu)   threshold=$POWERLENS_ALERT_CPU   ;;
             mem)   threshold=$POWERLENS_ALERT_MEM   ;;
+            temp)  threshold=$POWERLENS_ALERT_TEMP  ;;
         esac
         if (( value > threshold )); then
             print -n "#FF9500"
@@ -119,6 +120,7 @@ _powerlens_color() {
         power) idle=$POWERLENS_THRESH_POWER_IDLE; light=$POWERLENS_THRESH_POWER_LIGHT; moderate=$POWERLENS_THRESH_POWER_MODERATE ;;
         cpu)   idle=$POWERLENS_THRESH_CPU_IDLE;   light=$POWERLENS_THRESH_CPU_LIGHT;   moderate=$POWERLENS_THRESH_CPU_MODERATE ;;
         mem)   idle=$POWERLENS_THRESH_MEM_IDLE;   light=$POWERLENS_THRESH_MEM_LIGHT;   moderate=$POWERLENS_THRESH_MEM_MODERATE ;;
+        temp)  idle=$POWERLENS_THRESH_TEMP_IDLE;  light=$POWERLENS_THRESH_TEMP_LIGHT;  moderate=$POWERLENS_THRESH_TEMP_MODERATE ;;
     esac
 
     if   (( value < idle     )); then print -n "#00FF9F"
@@ -156,12 +158,13 @@ _powerlens_fmt_net() {
 
 _powerlens_format() {
     local json=$1
-    local power battery charging cpu mem net_up net_down
+    local power battery charging cpu mem net_up net_down cpu_temp
     power=$(_powerlens_jget "$json" "power")
     battery=$(_powerlens_jget "$json" "battery")
     charging=$(_powerlens_jget "$json" "charging")
     cpu=$(_powerlens_jget "$json" "cpu")
     mem=$(_powerlens_jget "$json" "mem")
+    cpu_temp=$(_powerlens_jget "$json" "cpu_temp")
     net_up=$(_powerlens_jget "$json" "net_up")
     net_down=$(_powerlens_jget "$json" "net_down")
 
@@ -181,6 +184,26 @@ _powerlens_format() {
     if [[ "$POWERLENS_SHOW_CPU" == "true" ]]; then
         local cc=$(_powerlens_color cpu $cpu)
         result+="${sep}$(_powerlens_wrap $cc "⚙$(_powerlens_fmt_num $cpu)%%")"
+    fi
+
+    if [[ "$POWERLENS_SHOW_TEMP" == "true" ]]; then
+        local tc temp_str
+        if [[ "$cpu_temp" == "-1" || -z "$cpu_temp" ]]; then
+            tc="#aaaaaa"
+            if [[ "$POWERLENS_MODE" == "full" ]]; then
+                temp_str="🌡 --°C"
+            else
+                temp_str="🌡--°"
+            fi
+        else
+            tc=$(_powerlens_color temp ${cpu_temp%%.*})
+            if [[ "$POWERLENS_MODE" == "full" ]]; then
+                temp_str="🌡 $(_powerlens_fmt_num $cpu_temp)°C"
+            else
+                temp_str="🌡$(_powerlens_fmt_num $cpu_temp)°"
+            fi
+        fi
+        result+="${sep}$(_powerlens_wrap $tc "$temp_str")"
     fi
 
     if [[ "$POWERLENS_SHOW_MEM" == "true" ]]; then
