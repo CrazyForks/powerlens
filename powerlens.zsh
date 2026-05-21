@@ -11,11 +11,6 @@ else
     _powerlens_bin="${0:h}/bin/powerlens-fetch-amd64"
 fi
 
-# Returns 0 (true) if running inside an SSH session
-_powerlens_is_ssh() {
-    [[ -n "$SSH_TTY" || -n "$SSH_CONNECTION" || -n "$SSH_CLIENT" ]]
-}
-
 # Degraded RPROMPT — all values shown as --
 _powerlens_degraded() {
     local g="%{\e[38;2;68;68;68m%}"  # #444444
@@ -33,14 +28,17 @@ _powerlens_start_daemon() {
         --iface "$POWERLENS_NET_IFACE" \
         --refresh "$POWERLENS_REFRESH" &!
     echo $! > "$_POWERLENS_PIDFILE"
-    echo $(( ${$(< "$_POWERLENS_COUNTER" 2>/dev/null):-0} + 1 )) \
-        > "$_POWERLENS_COUNTER"
+    local _prev=0
+    [[ -f "$_POWERLENS_COUNTER" ]] && _prev=$(< "$_POWERLENS_COUNTER")
+    echo $(( _prev + 1 )) > "$_POWERLENS_COUNTER"
 }
 
 _powerlens_stop_daemon() {
-    local count=$(( ${$(< "$_POWERLENS_COUNTER" 2>/dev/null):-1} - 1 ))
+    local _prev=1
+    [[ -f "$_POWERLENS_COUNTER" ]] && _prev=$(< "$_POWERLENS_COUNTER")
+    local count=$(( _prev - 1 ))
     if (( count <= 0 )); then
-        kill "$(< "$_POWERLENS_PIDFILE" 2>/dev/null)" 2>/dev/null
+        [[ -f "$_POWERLENS_PIDFILE" ]] && kill "$(< "$_POWERLENS_PIDFILE")" 2>/dev/null
         rm -f "$_POWERLENS_PIDFILE" "$_POWERLENS_COUNTER"
     else
         echo "$count" > "$_POWERLENS_COUNTER"
@@ -180,19 +178,19 @@ _powerlens_format() {
     if [[ "$POWERLENS_SHOW_BATTERY" == "true" ]]; then
         local icon="🔋"
         [[ "$charging" == "true" ]] && icon="🔌"
-        result+="${sep}$(_powerlens_wrap $pc "${icon}${battery}%")"
+        result+="${sep}$(_powerlens_wrap $pc "${icon}${battery}%%")"
     fi
 
     # ⚙ CPU
     if [[ "$POWERLENS_SHOW_CPU" == "true" ]]; then
         local cc=$(_powerlens_color cpu ${cpu%%.*})
-        result+="${sep}$(_powerlens_wrap $cc "⚙$(_powerlens_fmt_num $cpu)%")"
+        result+="${sep}$(_powerlens_wrap $cc "⚙$(_powerlens_fmt_num $cpu)%%")"
     fi
 
     # 🧠 Memory
     if [[ "$POWERLENS_SHOW_MEM" == "true" ]]; then
         local mc=$(_powerlens_color mem ${mem%%.*})
-        result+="${sep}$(_powerlens_wrap $mc "🧠$(_powerlens_fmt_num $mem)%")"
+        result+="${sep}$(_powerlens_wrap $mc "🧠$(_powerlens_fmt_num $mem)%%")"
     fi
 
     # ↑↓ Network
@@ -212,11 +210,6 @@ _powerlens_format() {
 
 # Entry point called by plugin.zsh after sourcing
 _powerlens_init() {
-    if _powerlens_is_ssh; then
-        # In SSH: just set a static degraded prompt, no daemon
-        RPROMPT="$(_powerlens_degraded)"
-        return
-    fi
     _powerlens_start_daemon
     precmd() { _powerlens_update_rprompt }
     zshexit() { _powerlens_stop_daemon }

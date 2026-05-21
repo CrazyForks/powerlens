@@ -1,0 +1,8 @@
+# Claude Code local config
+.claude/settings.local.json
+
+# Superpowers brainstorm artifacts
+.superpowers/
+
+# macOS
+.DS_Store
