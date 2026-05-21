@@ -87,6 +87,56 @@ _powerlens_update_rprompt() {
     RPROMPT="$_powerlens_cached_rprompt"
 }
 
+# Returns hex color string for a metric value.
+# Usage: _powerlens_color <metric> <value>
+# metric: power | cpu | mem | net | battery
+_powerlens_color() {
+    local metric=$1 value=$2
+
+    # Network and battery never get threshold color
+    [[ "$metric" == "net" || "$metric" == "battery" ]] && {
+        print -n "#aaaaaa"; return
+    }
+
+    if [[ "$POWERLENS_COLOR_MODE" == "alert" ]]; then
+        local threshold
+        case $metric in
+            power) threshold=$POWERLENS_ALERT_POWER ;;
+            cpu)   threshold=$POWERLENS_ALERT_CPU   ;;
+            mem)   threshold=$POWERLENS_ALERT_MEM   ;;
+        esac
+        if (( value > threshold )); then
+            print -n "#FF9500"
+        else
+            print -n "#aaaaaa"
+        fi
+        return
+    fi
+
+    # multi mode — 4-level threshold lookup
+    local idle light moderate
+    case $metric in
+        power) idle=$POWERLENS_THRESH_POWER_IDLE; light=$POWERLENS_THRESH_POWER_LIGHT; moderate=$POWERLENS_THRESH_POWER_MODERATE ;;
+        cpu)   idle=$POWERLENS_THRESH_CPU_IDLE;   light=$POWERLENS_THRESH_CPU_LIGHT;   moderate=$POWERLENS_THRESH_CPU_MODERATE ;;
+        mem)   idle=$POWERLENS_THRESH_MEM_IDLE;   light=$POWERLENS_THRESH_MEM_LIGHT;   moderate=$POWERLENS_THRESH_MEM_MODERATE ;;
+    esac
+
+    if   (( value < idle     )); then print -n "#00FF9F"
+    elif (( value < light    )); then print -n "#00D4FF"
+    elif (( value < moderate )); then print -n "#FF006E"
+    else                              print -n "#FF9500"
+    fi
+}
+
+# Wraps a hex color around text for zsh prompt rendering.
+_powerlens_wrap() {
+    local hex=$1 text=$2
+    local r=$(( 16#${hex[2,3]} ))
+    local g=$(( 16#${hex[4,5]} ))
+    local b=$(( 16#${hex[6,7]} ))
+    print -n "%{\e[38;2;${r};${g};${b}m%}${text}%{\e[0m%}"
+}
+
 # Entry point called by plugin.zsh after sourcing
 _powerlens_init() {
     if _powerlens_is_ssh; then

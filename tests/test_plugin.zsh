@@ -85,5 +85,23 @@ assert_eq "jget battery" "$val" "87"
 
 rm -rf "$tmpdir"
 
+print "\n=== Color — multi mode ==="
+POWERLENS_COLOR_MODE=multi
+assert_eq "power idle"     "$(_powerlens_color power 5)"    "#00FF9F"
+assert_eq "power light"    "$(_powerlens_color power 20)"   "#00D4FF"
+assert_eq "power moderate" "$(_powerlens_color power 40)"   "#FF006E"
+assert_eq "power peak"     "$(_powerlens_color power 60)"   "#FF9500"
+assert_eq "cpu idle"       "$(_powerlens_color cpu 10)"     "#00FF9F"
+assert_eq "cpu peak"       "$(_powerlens_color cpu 90)"     "#FF9500"
+assert_eq "mem moderate"   "$(_powerlens_color mem 80)"     "#FF006E"
+
+print "\n=== Color — alert mode ==="
+POWERLENS_COLOR_MODE=alert
+assert_eq "cpu under alert" "$(_powerlens_color cpu 50)"  "#aaaaaa"
+assert_eq "cpu over alert"  "$(_powerlens_color cpu 85)"  "#FF9500"
+assert_eq "mem under alert" "$(_powerlens_color mem 80)"  "#aaaaaa"
+assert_eq "mem over alert"  "$(_powerlens_color mem 90)"  "#FF9500"
+assert_eq "net always gray" "$(_powerlens_color net 999)" "#aaaaaa"
+
 print "\nResults: ${PASS} passed, ${FAIL} failed"
 (( FAIL == 0 ))
