@@ -23,6 +23,23 @@ func TestGetPower(t *testing.T) {
 	_ = charging
 }
 
+func TestCollectAll(t *testing.T) {
+	var prev collect.NetSample
+	m, err := collect.All("auto", &prev)
+	if err != nil {
+		t.Fatalf("All error: %v", err)
+	}
+	if m.Ts == 0 {
+		t.Error("Ts must be set")
+	}
+	if m.CPU < 0 || m.CPU > 100 {
+		t.Errorf("CPU out of range: %.1f", m.CPU)
+	}
+	if m.Mem < 0 || m.Mem > 100 {
+		t.Errorf("Mem out of range: %.1f", m.Mem)
+	}
+}
+
 func TestWriteJSON(t *testing.T) {
 	m := collect.Metrics{
 		Power: 42.7, Battery: 87, Charging: false,

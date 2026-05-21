@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"time"
 )
 
 type Metrics struct {
@@ -41,6 +42,30 @@ func WriteJSON(path string, m Metrics) error {
 		return err
 	}
 	return nil
+}
+
+// All collects all metrics in one call. prev is updated for network delta.
+func All(iface string, prev *NetSample) (Metrics, error) {
+	var m Metrics
+	m.Ts = time.Now().Unix()
+
+	m.Power, m.Battery, m.Charging, _ = GetPower()
+
+	cpu, err := GetCPU()
+	if err == nil {
+		m.CPU = cpu
+	}
+
+	mem, err := GetMem()
+	if err == nil {
+		m.Mem = mem
+	}
+
+	up, down, ifaceName, err := GetNet(iface, prev)
+	if err == nil {
+		m.NetUp, m.NetDown, m.NetIface = up, down, ifaceName
+	}
+	return m, nil
 }
 
 func XDGCacheDir() string {
