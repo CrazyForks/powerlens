@@ -9,6 +9,20 @@ import (
 	"github.com/user/powerlens/collect"
 )
 
+func TestGetPower(t *testing.T) {
+	p, b, charging, err := collect.GetPower()
+	if err != nil {
+		t.Fatalf("GetPower error: %v", err)
+	}
+	if p < 0 || p > 500 {
+		t.Errorf("power out of range: %.1f W", p)
+	}
+	if b < 0 || b > 100 {
+		t.Errorf("battery out of range: %d %%", b)
+	}
+	_ = charging
+}
+
 func TestWriteJSON(t *testing.T) {
 	m := collect.Metrics{
 		Power: 42.7, Battery: 87, Charging: false,
