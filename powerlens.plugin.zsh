@@ -10,6 +10,7 @@
 : ${POWERLENS_SHOW_CPU:=true}
 : ${POWERLENS_SHOW_MEM:=true}
 : ${POWERLENS_SHOW_NET:=true}
+: ${POWERLENS_SHOW_TEMP:=true}
 
 # ── Network ─────────────────────────────────────────────────
 : ${POWERLENS_NET_IFACE:=auto}        # auto | en0 | all
@@ -25,11 +26,15 @@
 : ${POWERLENS_THRESH_MEM_IDLE:=50}
 : ${POWERLENS_THRESH_MEM_LIGHT:=70}
 : ${POWERLENS_THRESH_MEM_MODERATE:=85}
+: ${POWERLENS_THRESH_TEMP_IDLE:=50}
+: ${POWERLENS_THRESH_TEMP_LIGHT:=70}
+: ${POWERLENS_THRESH_TEMP_MODERATE:=85}
 
 # ── alert mode thresholds ───────────────────────────────────
 : ${POWERLENS_ALERT_POWER:=50}
 : ${POWERLENS_ALERT_CPU:=80}
 : ${POWERLENS_ALERT_MEM:=85}
+: ${POWERLENS_ALERT_TEMP:=80}
 
 # Load core plugin
 source "${0:h}/powerlens.zsh"
