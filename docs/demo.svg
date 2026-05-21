@@ -40,14 +40,12 @@
   <text x="164" y="101" class="prompt" fill="#3fb950"> ❯</text>
   <rect x="178" y="89" width="8" height="14" class="cursor" opacity="0.8"/>
 
-  <!-- RPROMPT — Idle: all green -->
-  <text x="700" y="101" text-anchor="end" font-family="'SF Mono','Fira Code',monospace" font-size="13" fill="#00ff9f">⚡8W</text>
-  <text x="735" y="101" text-anchor="end" font-family="'SF Mono','Fira Code',monospace" font-size="13" fill="#00ff9f">🔋94%</text>
-  <text x="764" y="101" text-anchor="end" font-family="'SF Mono','Fira Code',monospace" font-size="13" fill="#00ff9f">⚙9%</text>
-
-  <!-- Network and mem on same line, extended -->
-  <text x="500" y="101" text-anchor="start" font-family="'SF Mono','Fira Code',monospace" font-size="13" fill="#00ff9f">🧠34%</text>
-  <text x="552" y="101" text-anchor="start" font-family="'SF Mono','Fira Code',monospace" font-size="13" fill="#6e7681">↑0.1M↓0.2M</text>
+  <!-- RPROMPT — Idle: all green, right-aligned -->
+  <text x="514" y="101" text-anchor="end" font-family="'SF Mono','Fira Code',monospace" font-size="13" fill="#00ff9f">⚡8W</text>
+  <text x="562" y="101" text-anchor="end" font-family="'SF Mono','Fira Code',monospace" font-size="13" fill="#00ff9f">🔋94%</text>
+  <text x="612" y="101" text-anchor="end" font-family="'SF Mono','Fira Code',monospace" font-size="13" fill="#00ff9f">⚙9%</text>
+  <text x="660" y="101" text-anchor="end" font-family="'SF Mono','Fira Code',monospace" font-size="13" fill="#00ff9f">🧠34%</text>
+  <text x="760" y="101" text-anchor="end" font-family="'SF Mono','Fira Code',monospace" font-size="13" fill="#6e7681">↑0.1M↓0.2M</text>
 
   <!-- ═══════════════════════════════════════ -->
   <!-- Section: Moderate load -->
@@ -59,12 +57,12 @@
   <text x="164" y="173" class="prompt" fill="#3fb950"> ❯</text>
   <text x="183" y="173" font-family="'SF Mono','Fira Code',monospace" font-size="13" fill="#6e7681">make test</text>
 
-  <!-- RPROMPT — Moderate: mixed colors -->
-  <text x="500" y="173" text-anchor="start" font-family="'SF Mono','Fira Code',monospace" font-size="13" fill="#00d4ff">⚡28W</text>
-  <text x="542" y="173" text-anchor="start" font-family="'SF Mono','Fira Code',monospace" font-size="13" fill="#00d4ff">🔋78%</text>
-  <text x="585" y="173" text-anchor="start" font-family="'SF Mono','Fira Code',monospace" font-size="13" fill="#ff006e">⚙72%</text>
-  <text x="622" y="173" text-anchor="start" font-family="'SF Mono','Fira Code',monospace" font-size="13" fill="#00d4ff">🧠58%</text>
-  <text x="666" y="173" text-anchor="start" font-family="'SF Mono','Fira Code',monospace" font-size="13" fill="#6e7681">↑0.3M↓1.1M</text>
+  <!-- RPROMPT — Moderate: mixed colors, right-aligned -->
+  <text x="514" y="173" text-anchor="end" font-family="'SF Mono','Fira Code',monospace" font-size="13" fill="#00d4ff">⚡28W</text>
+  <text x="562" y="173" text-anchor="end" font-family="'SF Mono','Fira Code',monospace" font-size="13" fill="#00d4ff">🔋78%</text>
+  <text x="612" y="173" text-anchor="end" font-family="'SF Mono','Fira Code',monospace" font-size="13" fill="#ff006e">⚙72%</text>
+  <text x="660" y="173" text-anchor="end" font-family="'SF Mono','Fira Code',monospace" font-size="13" fill="#00d4ff">🧠58%</text>
+  <text x="760" y="173" text-anchor="end" font-family="'SF Mono','Fira Code',monospace" font-size="13" fill="#6e7681">↑0.3M↓1.1M</text>
 
   <!-- ═══════════════════════════════════════ -->
   <!-- Section: High load -->
@@ -76,12 +74,12 @@
   <text x="164" y="245" class="prompt" fill="#3fb950"> ❯</text>
   <text x="183" y="245" font-family="'SF Mono','Fira Code',monospace" font-size="13" fill="#6e7681">python train.py</text>
 
-  <!-- RPROMPT — Peak: orange/pink across the board -->
-  <text x="470" y="245" text-anchor="start" font-family="'SF Mono','Fira Code',monospace" font-size="13" fill="#ff9500">⚡62W</text>
-  <text x="513" y="245" text-anchor="start" font-family="'SF Mono','Fira Code',monospace" font-size="13" fill="#00d4ff">🔋55%</text>
-  <text x="556" y="245" text-anchor="start" font-family="'SF Mono','Fira Code',monospace" font-size="13" fill="#ff9500">⚙91%</text>
-  <text x="593" y="245" text-anchor="start" font-family="'SF Mono','Fira Code',monospace" font-size="13" fill="#ff9500">🧠88%</text>
-  <text x="636" y="245" text-anchor="start" font-family="'SF Mono','Fira Code',monospace" font-size="13" fill="#6e7681">↑2.4M↓8.7M</text>
+  <!-- RPROMPT — Peak: orange/pink across the board, right-aligned -->
+  <text x="514" y="245" text-anchor="end" font-family="'SF Mono','Fira Code',monospace" font-size="13" fill="#ff9500">⚡62W</text>
+  <text x="562" y="245" text-anchor="end" font-family="'SF Mono','Fira Code',monospace" font-size="13" fill="#00d4ff">🔋55%</text>
+  <text x="612" y="245" text-anchor="end" font-family="'SF Mono','Fira Code',monospace" font-size="13" fill="#ff9500">⚙91%</text>
+  <text x="660" y="245" text-anchor="end" font-family="'SF Mono','Fira Code',monospace" font-size="13" fill="#ff9500">🧠88%</text>
+  <text x="760" y="245" text-anchor="end" font-family="'SF Mono','Fira Code',monospace" font-size="13" fill="#6e7681">↑2.4M↓8.7M</text>
 
   <!-- ═══════════════════════════════════════ -->
   <!-- Section: Full mode -->
@@ -93,12 +91,12 @@
   <text x="45" y="317" class="prompt" fill="#3fb950"> ❯</text>
   <rect x="58" y="305" width="8" height="14" class="cursor" opacity="0.8"/>
 
-  <!-- RPROMPT — Full mode with units -->
-  <text x="160" y="317" text-anchor="start" font-family="'SF Mono','Fira Code',monospace" font-size="13" fill="#00d4ff">⚡ 38.4W</text>
-  <text x="228" y="317" text-anchor="start" font-family="'SF Mono','Fira Code',monospace" font-size="13" fill="#00d4ff">🔋 72%</text>
-  <text x="272" y="317" text-anchor="start" font-family="'SF Mono','Fira Code',monospace" font-size="13" fill="#ff006e">⚙ 47.3%</text>
-  <text x="335" y="317" text-anchor="start" font-family="'SF Mono','Fira Code',monospace" font-size="13" fill="#ff006e">🧠 76.8%</text>
-  <text x="400" y="317" text-anchor="start" font-family="'SF Mono','Fira Code',monospace" font-size="13" fill="#6e7681">↑ 2.4MB/s  ↓ 8.1MB/s</text>
+  <!-- RPROMPT — Full mode with units, right-aligned -->
+  <text x="389" y="317" text-anchor="end" font-family="'SF Mono','Fira Code',monospace" font-size="13" fill="#00d4ff">⚡ 38.4W</text>
+  <text x="446" y="317" text-anchor="end" font-family="'SF Mono','Fira Code',monospace" font-size="13" fill="#00d4ff">🔋 72%</text>
+  <text x="513" y="317" text-anchor="end" font-family="'SF Mono','Fira Code',monospace" font-size="13" fill="#ff006e">⚙ 47.3%</text>
+  <text x="586" y="317" text-anchor="end" font-family="'SF Mono','Fira Code',monospace" font-size="13" fill="#ff006e">🧠 76.8%</text>
+  <text x="760" y="317" text-anchor="end" font-family="'SF Mono','Fira Code',monospace" font-size="13" fill="#6e7681">↑ 2.4MB/s  ↓ 8.1MB/s</text>
 
   <!-- ═══════════════════════════════════════ -->
   <!-- Section: Alert mode -->
@@ -110,16 +108,16 @@
   <text x="122" y="389" class="prompt" fill="#3fb950"> ❯</text>
   <rect x="136" y="377" width="8" height="14" class="cursor" opacity="0.8"/>
 
-  <!-- RPROMPT — Alert: gray for under-threshold, orange for over -->
-  <text x="320" y="389" text-anchor="start" font-family="'SF Mono','Fira Code',monospace" font-size="13" fill="#aaaaaa">⚡42W</text>
-  <text x="358" y="389" text-anchor="start" font-family="'SF Mono','Fira Code',monospace" font-size="13" fill="#aaaaaa">🔋81%</text>
-  <text x="396" y="389" text-anchor="start" font-family="'SF Mono','Fira Code',monospace" font-size="13" fill="#aaaaaa">⚙44%</text>
-  <text x="430" y="389" text-anchor="start" font-family="'SF Mono','Fira Code',monospace" font-size="13" fill="#ff9500">🧠87%</text>
-  <text x="470" y="389" text-anchor="start" font-family="'SF Mono','Fira Code',monospace" font-size="13" fill="#aaaaaa">↑0.8M↓3.2M</text>
+  <!-- RPROMPT — Alert: gray for under-threshold, orange for over, right-aligned -->
+  <text x="514" y="389" text-anchor="end" font-family="'SF Mono','Fira Code',monospace" font-size="13" fill="#aaaaaa">⚡42W</text>
+  <text x="562" y="389" text-anchor="end" font-family="'SF Mono','Fira Code',monospace" font-size="13" fill="#aaaaaa">🔋81%</text>
+  <text x="612" y="389" text-anchor="end" font-family="'SF Mono','Fira Code',monospace" font-size="13" fill="#aaaaaa">⚙44%</text>
+  <text x="660" y="389" text-anchor="end" font-family="'SF Mono','Fira Code',monospace" font-size="13" fill="#ff9500">🧠87%</text>
+  <text x="760" y="389" text-anchor="end" font-family="'SF Mono','Fira Code',monospace" font-size="13" fill="#aaaaaa">↑0.8M↓3.2M</text>
 
   <!-- Annotation arrow + label for alert mode -->
-  <line x1="448" y1="400" x2="448" y2="418" stroke="#ff9500" stroke-width="1" stroke-dasharray="3,2"/>
-  <text x="450" y="430" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="10" fill="#ff9500">mem &gt; 85% threshold</text>
+  <line x1="638" y1="400" x2="638" y2="418" stroke="#ff9500" stroke-width="1" stroke-dasharray="3,2"/>
+  <text x="640" y="430" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="10" fill="#ff9500">mem &gt; 85% threshold</text>
 
   <!-- Bottom border line -->
   <line x1="0" y1="438" x2="780" y2="438" stroke="#30363d" stroke-width="1"/>
