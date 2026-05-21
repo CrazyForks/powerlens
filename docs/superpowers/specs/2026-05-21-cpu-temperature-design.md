@@ -36,7 +36,7 @@ Add CPU temperature as a new independently-toggleable metric in the PowerLens RP
 Implements `GetCPUTemp() (float64, error)` returning °C, or -1 on failure.
 
 **Apple Silicon path:**  
-Extend the existing `powermetrics` call in `power_darwin.go`. The `cpu_power` sampler's plist output already contains `cpu_die_temperature_celsius` on M-series chips. Add `parsePowermetricsTemp(plist string) float64` alongside the existing `parsePowermetricsWatts`. To avoid a second `powermetrics` subprocess, `GetPower()` is refactored to return the raw plist string so both power and temperature can be parsed from one call.
+Extend the existing `powermetrics` call in `power_darwin.go`. The `cpu_power` sampler's plist output already contains `cpu_die_temperature_celsius` on M-series chips. Add `parsePowermetricsTemp(plist string) float64` alongside the existing `parsePowermetricsWatts`. To avoid a second `powermetrics` subprocess, `GetPower()` is refactored: its internal plist string is passed to `GetCPUTemp()` as a parameter (or both are combined into a single `GetPowerAndTemp()` call returning `(watts, temp float64, battery int, charging bool, err error)`). If `cpu_die_temperature_celsius` is absent in the plist (older firmware), temperature falls back to -1.
 
 **Intel path:**  
 CGo + IOKit SMC access. Reads key `TC0D` (CPU die temperature), following the same pattern as battery/charging in `power_darwin.go`. Falls back to `-1` if the key is absent or the SMC cannot be opened.
