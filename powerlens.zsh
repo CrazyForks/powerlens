@@ -47,6 +47,46 @@ _powerlens_stop_daemon() {
     fi
 }
 
+_powerlens_last_mtime=0
+_powerlens_cached_rprompt=""
+
+# Extract a scalar value from a flat JSON string by key name.
+_powerlens_jget() {
+    local json=$1 key=$2 val
+    if [[ $json =~ "\"${key}\":\"([^\"]+)\"" ]]; then
+        val="${match[1]}"
+    elif [[ $json =~ "\"${key}\":([^,}]+)" ]]; then
+        val="${match[1]}"
+        val="${val// /}"
+    fi
+    print -n "$val"
+}
+
+_powerlens_update_rprompt() {
+    local cache="$_POWERLENS_CACHE/metrics.json"
+    local mtime
+    mtime=$(stat -f %m "$cache" 2>/dev/null) || {
+        RPROMPT="$(_powerlens_degraded)"; return
+    }
+
+    if [[ "$mtime" != "$_powerlens_last_mtime" ]]; then
+        local json ts now
+        json=$(< "$cache")
+        ts=$(_powerlens_jget "$json" "ts")
+        now=$(date +%s)
+
+        if (( now - ts > 10 )); then
+            _powerlens_start_daemon
+            RPROMPT="$(_powerlens_degraded)"; return
+        fi
+
+        _powerlens_last_mtime="$mtime"
+        _powerlens_cached_rprompt=$(_powerlens_format "$json")
+    fi
+
+    RPROMPT="$_powerlens_cached_rprompt"
+}
+
 # Entry point called by plugin.zsh after sourcing
 _powerlens_init() {
     if _powerlens_is_ssh; then

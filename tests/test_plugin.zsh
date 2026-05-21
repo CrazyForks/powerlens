@@ -68,5 +68,22 @@ assert_eq "PID file removed" "$(test -f $_POWERLENS_PIDFILE && echo yes || echo 
 
 rm -rf "$_POWERLENS_CACHE"
 
+print "\n=== JSON parsing ==="
+local tmpdir=$(mktemp -d)
+local cachefile="$tmpdir/metrics.json"
+cat > "$cachefile" <<'EOF'
+{"power":42.7,"battery":87,"charging":false,"cpu":34.2,"mem":62.1,"net_up":1.2,"net_down":3.8,"net_iface":"en0","ts":9999999999}
+EOF
+
+local val
+val=$(_powerlens_jget "$(< $cachefile)" "power")
+assert_eq "jget power" "$val" "42.7"
+val=$(_powerlens_jget "$(< $cachefile)" "net_iface")
+assert_eq "jget net_iface" "$val" "en0"
+val=$(_powerlens_jget "$(< $cachefile)" "battery")
+assert_eq "jget battery" "$val" "87"
+
+rm -rf "$tmpdir"
+
 print "\nResults: ${PASS} passed, ${FAIL} failed"
 (( FAIL == 0 ))
