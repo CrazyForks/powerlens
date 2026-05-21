@@ -23,6 +23,30 @@ _powerlens_degraded() {
     print -n "${g}⚡ --W 🔋 --% ⚙ --% 🧠 --% ↑ -- ↓ --${r}"
 }
 
+_powerlens_start_daemon() {
+    if [[ -f "$_POWERLENS_PIDFILE" ]] \
+        && kill -0 "$(< "$_POWERLENS_PIDFILE")" 2>/dev/null; then
+        return  # already running
+    fi
+    mkdir -p "$_POWERLENS_CACHE"
+    "$_powerlens_bin" --daemon \
+        --iface "$POWERLENS_NET_IFACE" \
+        --refresh "$POWERLENS_REFRESH" &!
+    echo $! > "$_POWERLENS_PIDFILE"
+    echo $(( ${$(< "$_POWERLENS_COUNTER" 2>/dev/null):-0} + 1 )) \
+        > "$_POWERLENS_COUNTER"
+}
+
+_powerlens_stop_daemon() {
+    local count=$(( ${$(< "$_POWERLENS_COUNTER" 2>/dev/null):-1} - 1 ))
+    if (( count <= 0 )); then
+        kill "$(< "$_POWERLENS_PIDFILE" 2>/dev/null)" 2>/dev/null
+        rm -f "$_POWERLENS_PIDFILE" "$_POWERLENS_COUNTER"
+    else
+        echo "$count" > "$_POWERLENS_COUNTER"
+    fi
+}
+
 # Entry point called by plugin.zsh after sourcing
 _powerlens_init() {
     if _powerlens_is_ssh; then
