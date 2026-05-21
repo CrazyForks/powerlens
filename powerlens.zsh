@@ -1,10 +1,10 @@
 # PowerLens core — loaded by powerlens.plugin.zsh
+zmodload zsh/datetime
 
 _POWERLENS_CACHE="${XDG_CACHE_HOME:-$HOME/.cache}/powerlens"
 _POWERLENS_PIDFILE="$_POWERLENS_CACHE/daemon.pid"
 _POWERLENS_COUNTER="$_POWERLENS_CACHE/sessions"
 
-# Detect arch and set binary path
 if [[ "$(uname -m)" == "arm64" ]]; then
     _powerlens_bin="${0:h}/bin/powerlens-fetch-arm64"
 else
@@ -13,9 +13,7 @@ fi
 
 # Degraded RPROMPT — all values shown as --
 _powerlens_degraded() {
-    local g="%{\e[38;2;68;68;68m%}"  # #444444
-    local r="%{\e[0m%}"
-    print -n "${g}⚡ --W 🔋 --% ⚙ --% 🧠 --% ↑ -- ↓ --${r}"
+    _powerlens_wrap "#444444" "⚡ --W 🔋 --% ⚙ --% 🧠 --% ↑ -- ↓ --"
 }
 
 _powerlens_start_daemon() {
@@ -47,8 +45,9 @@ _powerlens_stop_daemon() {
 
 _powerlens_last_mtime=0
 _powerlens_cached_rprompt=""
+_powerlens_last_degraded=0
+_POWERLENS_DEGRADED=""
 
-# Extract a scalar value from a flat JSON string by key name.
 _powerlens_jget() {
     local json=$1 key=$2 val
     if [[ $json =~ "\"${key}\":\"([^\"]+)\"" ]]; then
@@ -64,34 +63,38 @@ _powerlens_update_rprompt() {
     local cache="$_POWERLENS_CACHE/metrics.json"
     local mtime
     mtime=$(stat -f %m "$cache" 2>/dev/null) || {
-        RPROMPT="$(_powerlens_degraded)"; return
+        RPROMPT="$_POWERLENS_DEGRADED"
+        (( _powerlens_last_degraded )) && return 1
+        _powerlens_last_degraded=1; return 0
     }
 
     if [[ "$mtime" != "$_powerlens_last_mtime" ]]; then
-        local json ts now
+        local json ts
         json=$(< "$cache")
         ts=$(_powerlens_jget "$json" "ts")
-        now=$(date +%s)
+        _powerlens_last_mtime="$mtime"
 
-        if (( now - ts > 10 )); then
+        if (( EPOCHSECONDS - ts > 10 )); then
             _powerlens_start_daemon
-            RPROMPT="$(_powerlens_degraded)"; return
+            _powerlens_cached_rprompt="$_POWERLENS_DEGRADED"
+            RPROMPT="$_POWERLENS_DEGRADED"
+            (( _powerlens_last_degraded )) && return 1
+            _powerlens_last_degraded=1; return 0
         fi
 
-        _powerlens_last_mtime="$mtime"
+        _powerlens_last_degraded=0
         _powerlens_cached_rprompt=$(_powerlens_format "$json")
+        RPROMPT="$_powerlens_cached_rprompt"
+        return 0
     fi
 
     RPROMPT="$_powerlens_cached_rprompt"
+    return 1
 }
 
-# Returns hex color string for a metric value.
-# Usage: _powerlens_color <metric> <value>
-# metric: power | cpu | mem | net | battery
 _powerlens_color() {
-    local metric=$1 value=$2
+    local metric=$1 value=${2%%.*}
 
-    # Network and battery never get threshold color
     [[ "$metric" == "net" || "$metric" == "battery" ]] && {
         print -n "#aaaaaa"; return
     }
@@ -111,7 +114,6 @@ _powerlens_color() {
         return
     fi
 
-    # multi mode — 4-level threshold lookup
     local idle light moderate
     case $metric in
         power) idle=$POWERLENS_THRESH_POWER_IDLE; light=$POWERLENS_THRESH_POWER_LIGHT; moderate=$POWERLENS_THRESH_POWER_MODERATE ;;
@@ -126,7 +128,6 @@ _powerlens_color() {
     fi
 }
 
-# Wraps a hex color around text for zsh prompt rendering.
 _powerlens_wrap() {
     local hex=$1 text=$2
     local r=$(( 16#${hex[2,3]} ))
@@ -135,7 +136,6 @@ _powerlens_wrap() {
     print -n "%{\e[38;2;${r};${g};${b}m%}${text}%{\e[0m%}"
 }
 
-# Format a number: compact removes decimals, full keeps 1 decimal place.
 _powerlens_fmt_num() {
     local val=$1
     if [[ "$POWERLENS_MODE" == "compact" ]]; then
@@ -145,7 +145,6 @@ _powerlens_fmt_num() {
     fi
 }
 
-# Format MB/s value: compact → "1.2M", full → "1.2MB/s"
 _powerlens_fmt_net() {
     local val=$1
     if [[ "$POWERLENS_MODE" == "compact" ]]; then
@@ -155,7 +154,6 @@ _powerlens_fmt_net() {
     fi
 }
 
-# Format all metrics from JSON into a colored RPROMPT string.
 _powerlens_format() {
     local json=$1
     local power battery charging cpu mem net_up net_down
@@ -170,8 +168,7 @@ _powerlens_format() {
     local sep=" "
     local result=""
 
-    # ⚡ Power
-    local pc=$(_powerlens_color power ${power%%.*})
+    local pc=$(_powerlens_color power $power)
     result+="$(_powerlens_wrap $pc "⚡$(_powerlens_fmt_num $power)W")"
 
     # 🔋 Battery (follows power color)
@@ -181,21 +178,18 @@ _powerlens_format() {
         result+="${sep}$(_powerlens_wrap $pc "${icon}${battery}%%")"
     fi
 
-    # ⚙ CPU
     if [[ "$POWERLENS_SHOW_CPU" == "true" ]]; then
-        local cc=$(_powerlens_color cpu ${cpu%%.*})
+        local cc=$(_powerlens_color cpu $cpu)
         result+="${sep}$(_powerlens_wrap $cc "⚙$(_powerlens_fmt_num $cpu)%%")"
     fi
 
-    # 🧠 Memory
     if [[ "$POWERLENS_SHOW_MEM" == "true" ]]; then
-        local mc=$(_powerlens_color mem ${mem%%.*})
+        local mc=$(_powerlens_color mem $mem)
         result+="${sep}$(_powerlens_wrap $mc "🧠$(_powerlens_fmt_num $mem)%%")"
     fi
 
-    # ↑↓ Network
     if [[ "$POWERLENS_SHOW_NET" == "true" ]]; then
-        local nc=$(_powerlens_color net 0)
+        local nc="#aaaaaa"
         local net_str
         if [[ "$POWERLENS_MODE" == "compact" ]]; then
             net_str="↑$(_powerlens_fmt_net $net_up)↓$(_powerlens_fmt_net $net_down)"
@@ -208,26 +202,23 @@ _powerlens_format() {
     print -n "$result"
 }
 
-# Clear RPROMPT from the submitted line so it doesn't accumulate in scrollback.
-# precmd restores it for the next active prompt.
+# Clear RPROMPT on submit so it doesn't accumulate in scrollback.
 _powerlens_zle_line_finish() {
     RPROMPT=""
     zle reset-prompt
 }
 
-# Fires every TMOUT seconds while user is idle at the prompt.
-# Only redraws when ZLE is active; TMOUT is preserved if already set smaller.
+# Only redraws when ZLE is active (guards against non-interactive contexts).
 TRAPALRM() {
-    [[ -n "$ZLE_STATE" ]] && { _powerlens_update_rprompt; zle reset-prompt }
+    [[ -n "$ZLE_STATE" ]] && _powerlens_update_rprompt && zle reset-prompt
 }
 
-# Entry point called by plugin.zsh after sourcing
 _powerlens_init() {
+    _POWERLENS_DEGRADED=$(_powerlens_degraded)
     _powerlens_start_daemon
     precmd() { _powerlens_update_rprompt }
     zshexit() { _powerlens_stop_daemon }
     zle -N zle-line-finish _powerlens_zle_line_finish
-    # Trigger TRAPALRM at the refresh interval; honour a smaller existing TMOUT
     if (( ${TMOUT:-0} == 0 || ${TMOUT:-0} > POWERLENS_REFRESH )); then
         TMOUT=$POWERLENS_REFRESH
     fi
