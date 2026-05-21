@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 780 180" width="780" height="180">
+  <rect width="780" height="180" rx="8" fill="#0d1117"/>
+
+  <!-- Title -->
+  <text x="20" y="30" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="13" font-weight="600" fill="#e6edf3">Color Reference — multi mode</text>
+
+  <!-- Column headers -->
+  <text x="80"  y="55" text-anchor="middle" font-family="'SF Mono','Fira Code',monospace" font-size="11" fill="#6e7681">Idle</text>
+  <text x="230" y="55" text-anchor="middle" font-family="'SF Mono','Fira Code',monospace" font-size="11" fill="#6e7681">Light</text>
+  <text x="380" y="55" text-anchor="middle" font-family="'SF Mono','Fira Code',monospace" font-size="11" fill="#6e7681">Moderate</text>
+  <text x="530" y="55" text-anchor="middle" font-family="'SF Mono','Fira Code',monospace" font-size="11" fill="#6e7681">Peak</text>
+  <text x="660" y="55" text-anchor="middle" font-family="'SF Mono','Fira Code',monospace" font-size="11" fill="#6e7681">Network / Battery</text>
+
+  <!-- Color swatches row 1: colors -->
+  <rect x="30"  y="62" width="100" height="28" rx="4" fill="#00FF9F" opacity="0.15"/>
+  <rect x="180" y="62" width="100" height="28" rx="4" fill="#00D4FF" opacity="0.15"/>
+  <rect x="330" y="62" width="100" height="28" rx="4" fill="#FF006E" opacity="0.15"/>
+  <rect x="480" y="62" width="100" height="28" rx="4" fill="#FF9500" opacity="0.15"/>
+  <rect x="610" y="62" width="100" height="28" rx="4" fill="#aaaaaa" opacity="0.15"/>
+
+  <text x="80"  y="81" text-anchor="middle" font-family="'SF Mono','Fira Code',monospace" font-size="13" fill="#00FF9F">⚡ 8W  ⚙ 12%</text>
+  <text x="230" y="81" text-anchor="middle" font-family="'SF Mono','Fira Code',monospace" font-size="13" fill="#00D4FF">⚡ 22W  ⚙ 42%</text>
+  <text x="380" y="81" text-anchor="middle" font-family="'SF Mono','Fira Code',monospace" font-size="13" fill="#FF006E">⚡ 38W  ⚙ 70%</text>
+  <text x="530" y="81" text-anchor="middle" font-family="'SF Mono','Fira Code',monospace" font-size="13" fill="#FF9500">⚡ 62W  ⚙ 90%</text>
+  <text x="660" y="81" text-anchor="middle" font-family="'SF Mono','Fira Code',monospace" font-size="13" fill="#aaaaaa">↑1.2M  ↓3.8M</text>
+
+  <!-- Threshold labels -->
+  <text x="80"  y="110" text-anchor="middle" font-family="'SF Mono','Fira Code',monospace" font-size="10" fill="#6e7681">power &lt; 10W</text>
+  <text x="80"  y="123" text-anchor="middle" font-family="'SF Mono','Fira Code',monospace" font-size="10" fill="#6e7681">cpu &lt; 30%</text>
+  <text x="80"  y="136" text-anchor="middle" font-family="'SF Mono','Fira Code',monospace" font-size="10" fill="#6e7681">mem &lt; 50%</text>
+
+  <text x="230" y="110" text-anchor="middle" font-family="'SF Mono','Fira Code',monospace" font-size="10" fill="#6e7681">power &lt; 30W</text>
+  <text x="230" y="123" text-anchor="middle" font-family="'SF Mono','Fira Code',monospace" font-size="10" fill="#6e7681">cpu &lt; 60%</text>
+  <text x="230" y="136" text-anchor="middle" font-family="'SF Mono','Fira Code',monospace" font-size="10" fill="#6e7681">mem &lt; 70%</text>
+
+  <text x="380" y="110" text-anchor="middle" font-family="'SF Mono','Fira Code',monospace" font-size="10" fill="#6e7681">power &lt; 50W</text>
+  <text x="380" y="123" text-anchor="middle" font-family="'SF Mono','Fira Code',monospace" font-size="10" fill="#6e7681">cpu &lt; 85%</text>
+  <text x="380" y="136" text-anchor="middle" font-family="'SF Mono','Fira Code',monospace" font-size="10" fill="#6e7681">mem &lt; 85%</text>
+
+  <text x="530" y="110" text-anchor="middle" font-family="'SF Mono','Fira Code',monospace" font-size="10" fill="#6e7681">power ≥ 50W</text>
+  <text x="530" y="123" text-anchor="middle" font-family="'SF Mono','Fira Code',monospace" font-size="10" fill="#6e7681">cpu ≥ 85%</text>
+  <text x="530" y="136" text-anchor="middle" font-family="'SF Mono','Fira Code',monospace" font-size="10" fill="#6e7681">mem ≥ 85%</text>
+
+  <text x="660" y="110" text-anchor="middle" font-family="'SF Mono','Fira Code',monospace" font-size="10" fill="#6e7681">always neutral</text>
+  <text x="660" y="123" text-anchor="middle" font-family="'SF Mono','Fira Code',monospace" font-size="10" fill="#6e7681">(no threshold)</text>
+
+  <!-- Hex labels -->
+  <text x="80"  y="158" text-anchor="middle" font-family="'SF Mono','Fira Code',monospace" font-size="10" fill="#00FF9F">#00FF9F</text>
+  <text x="230" y="158" text-anchor="middle" font-family="'SF Mono','Fira Code',monospace" font-size="10" fill="#00D4FF">#00D4FF</text>
+  <text x="380" y="158" text-anchor="middle" font-family="'SF Mono','Fira Code',monospace" font-size="10" fill="#FF006E">#FF006E</text>
+  <text x="530" y="158" text-anchor="middle" font-family="'SF Mono','Fira Code',monospace" font-size="10" fill="#FF9500">#FF9500</text>
+  <text x="660" y="158" text-anchor="middle" font-family="'SF Mono','Fira Code',monospace" font-size="10" fill="#aaaaaa">#aaaaaa</text>
+</svg>
