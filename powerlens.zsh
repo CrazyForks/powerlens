@@ -196,7 +196,7 @@ _powerlens_format() {
                 temp_str="🌡--°"
             fi
         else
-            tc=$(_powerlens_color temp ${cpu_temp%%.*})
+            tc=$(_powerlens_color temp $cpu_temp)
             if [[ "$POWERLENS_MODE" == "full" ]]; then
                 temp_str="🌡 $(_powerlens_fmt_num $cpu_temp)°C"
             else
