@@ -208,9 +208,17 @@ _powerlens_format() {
     print -n "$result"
 }
 
+# Clear RPROMPT from the submitted line so it doesn't accumulate in scrollback.
+# precmd restores it for the next active prompt.
+_powerlens_zle_line_finish() {
+    RPROMPT=""
+    zle reset-prompt
+}
+
 # Entry point called by plugin.zsh after sourcing
 _powerlens_init() {
     _powerlens_start_daemon
     precmd() { _powerlens_update_rprompt }
     zshexit() { _powerlens_stop_daemon }
+    zle -N zle-line-finish _powerlens_zle_line_finish
 }
