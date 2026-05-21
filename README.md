@@ -12,7 +12,7 @@ PowerLens is a lightweight Oh-My-Zsh plugin that embeds live system metrics into
 
 | | |
 |---|---|
-| **5 metrics** | Power (W) · Battery % · CPU % · Memory % · Network ↑↓ MB/s |
+| **6 metrics** | Power (W) · Battery % · CPU % · CPU temp °C · Memory % · Network ↑↓ MB/s |
 | **Two color modes** | `multi` — 4-level gradient per metric / `alert` — neutral until threshold |
 | **Two display modes** | `compact` — abbreviated values / `full` — with units and decimals |
 | **Per-metric toggles** | Show or hide any metric independently |
@@ -83,12 +83,12 @@ POWERLENS_COLOR_MODE=multi    # multi   | alert
 
 **`compact`** (default):
 ```
-⚡38W 🔋87% ⚙34% 🧠62% ↑1.2M↓3.8M
+⚡38W 🔋87% ⚙34% 🌡55° 🧠62% ↑1.2M↓3.8M
 ```
 
 **`full`**:
 ```
-⚡ 38.4W 🔋 87% ⚙ 34.2% 🧠 62.1% ↑ 1.2MB/s ↓ 3.8MB/s
+⚡ 38.4W 🔋 87% ⚙ 34.2% 🌡 55.0°C 🧠 62.1% ↑ 1.2MB/s ↓ 3.8MB/s
 ```
 
 ### Show / Hide Metrics
@@ -96,6 +96,7 @@ POWERLENS_COLOR_MODE=multi    # multi   | alert
 ```zsh
 POWERLENS_SHOW_BATTERY=true   # true | false
 POWERLENS_SHOW_CPU=true
+POWERLENS_SHOW_TEMP=true
 POWERLENS_SHOW_MEM=true
 POWERLENS_SHOW_NET=true
 ```
@@ -131,6 +132,11 @@ POWERLENS_THRESH_CPU_MODERATE=85
 POWERLENS_THRESH_MEM_IDLE=50
 POWERLENS_THRESH_MEM_LIGHT=70
 POWERLENS_THRESH_MEM_MODERATE=85
+
+# CPU Temperature (°C)
+POWERLENS_THRESH_TEMP_IDLE=50
+POWERLENS_THRESH_TEMP_LIGHT=70
+POWERLENS_THRESH_TEMP_MODERATE=85
 ```
 
 Default values are tuned for Apple Silicon MacBooks. Adjust for your machine.
@@ -143,6 +149,7 @@ In `alert` mode all metrics render in neutral gray (`#aaaaaa`) until a single th
 POWERLENS_ALERT_POWER=50      # W
 POWERLENS_ALERT_CPU=80        # %
 POWERLENS_ALERT_MEM=85        # %
+POWERLENS_ALERT_TEMP=80      # °C
 ```
 
 ---
