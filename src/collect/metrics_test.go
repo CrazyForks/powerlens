@@ -10,9 +10,9 @@ import (
 )
 
 func TestGetPower(t *testing.T) {
-	p, b, charging, err := collect.GetPower()
+	p, b, charging, tempC, err := collect.GetPowerAndTemp()
 	if err != nil {
-		t.Fatalf("GetPower error: %v", err)
+		t.Fatalf("GetPowerAndTemp error: %v", err)
 	}
 	if p < 0 || p > 500 {
 		t.Errorf("power out of range: %.1f W", p)
@@ -21,6 +21,7 @@ func TestGetPower(t *testing.T) {
 		t.Errorf("battery out of range: %d %%", b)
 	}
 	_ = charging
+	_ = tempC
 }
 
 func TestCollectAll(t *testing.T) {

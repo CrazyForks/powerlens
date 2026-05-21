@@ -50,7 +50,7 @@ func All(iface string, prev *NetSample) (Metrics, error) {
 	var m Metrics
 	m.Ts = time.Now().Unix()
 
-	m.Power, m.Battery, m.Charging, _ = GetPower()
+	m.Power, m.Battery, m.Charging, m.CpuTemp, _ = GetPowerAndTemp()
 
 	cpu, err := GetCPU()
 	if err == nil {
