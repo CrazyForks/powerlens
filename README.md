@@ -2,7 +2,7 @@
 
 > Real-time system metrics in your zsh right prompt — power, battery, CPU, memory, and network I/O, glanceable at a glance.
 
-![PowerLens Demo](docs/demo.svg)
+![PowerLens Demo](assets/demo.svg)
 
 PowerLens is a lightweight Oh-My-Zsh plugin that embeds live system metrics into `RPROMPT`. A single background daemon collects all data every 2 seconds; the prompt reads a cached JSON file on each `precmd` — adding less than 5ms to prompt render time regardless of how many terminal windows you have open.
 
@@ -25,7 +25,7 @@ PowerLens is a lightweight Oh-My-Zsh plugin that embeds live system metrics into
 
 ## Color Reference
 
-![Color Reference](docs/color-reference.svg)
+![Color Reference](assets/color-reference.svg)
 
 Each metric is colored independently. Thresholds are fully configurable.
 
