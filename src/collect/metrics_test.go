@@ -23,7 +23,10 @@ func TestWriteJSON(t *testing.T) {
 		t.Fatalf("WriteJSON error: %v", err)
 	}
 
-	data, _ := os.ReadFile(path)
+	data, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("read file error: %v", err)
+	}
 	var got collect.Metrics
 	if err := json.Unmarshal(data, &got); err != nil {
 		t.Fatalf("unmarshal error: %v", err)

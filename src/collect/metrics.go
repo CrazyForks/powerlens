@@ -29,10 +29,18 @@ func WriteJSON(path string, m Metrics) error {
 	}
 	if err := json.NewEncoder(f).Encode(m); err != nil {
 		f.Close()
+		os.Remove(tmp)
 		return err
 	}
-	f.Close()
-	return os.Rename(tmp, path) // atomic write
+	if err := f.Close(); err != nil {
+		os.Remove(tmp)
+		return err
+	}
+	if err := os.Rename(tmp, path); err != nil {
+		os.Remove(tmp)
+		return err
+	}
+	return nil
 }
 
 func XDGCacheDir() string {
