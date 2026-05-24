@@ -6,3 +6,22 @@
 
 # macOS
 .DS_Store
+**/.DS_Store
+
+# Compiled binaries (distributed via GitHub Releases)
+bin/
+
+# Go build artifacts
+src/powerlens-fetch
+src/powerlens-fetch-arm64
+src/powerlens-fetch-amd64
+src/*.test
+
+# Internal AI planning docs
+docs/superpowers/
+
+# Editor
+.idea/
+.vscode/
+*.swp
+*.swo

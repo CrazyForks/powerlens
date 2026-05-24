@@ -2,6 +2,11 @@
 
 > Real-time system metrics in your zsh right prompt — power, battery, CPU, memory, and network I/O, glanceable at a glance.
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+![Platform: macOS 12+](https://img.shields.io/badge/platform-macOS%2012%2B-lightgrey?logo=apple)
+![Shell: zsh](https://img.shields.io/badge/shell-zsh-blue)
+[![CI](https://github.com/luyangkk/powerlens/actions/workflows/ci.yml/badge.svg)](https://github.com/luyangkk/powerlens/actions/workflows/ci.yml)
+
 ![PowerLens Demo](assets/demo.svg)
 
 PowerLens is a lightweight Oh-My-Zsh plugin that embeds live system metrics into `RPROMPT`. A single background daemon collects all data every 2 seconds; the prompt reads a cached JSON file on each `precmd` — adding less than 5ms to prompt render time regardless of how many terminal windows you have open.
@@ -36,7 +41,7 @@ Each metric is colored independently. Thresholds are fully configurable.
 ### Oh-My-Zsh
 
 ```bash
-git clone https://github.com/your-username/powerlens.git \
+git clone https://github.com/luyangkk/powerlens.git \
   ~/.oh-my-zsh/custom/plugins/powerlens
 ```
 
@@ -234,6 +239,12 @@ make clean      # Remove built binaries
 
 ---
 
+## Contributing
+
+Contributions are welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) before submitting a pull request.
+
+---
+
 ## License
 
-MIT
+MIT — see [LICENSE](LICENSE) for details.
