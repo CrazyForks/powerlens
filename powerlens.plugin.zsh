@@ -13,7 +13,7 @@
 : ${POWERLENS_SHOW_TEMP:=true}
 
 # ── Network ─────────────────────────────────────────────────
-: ${POWERLENS_NET_IFACE:=auto}        # auto | en0 | all
+: ${POWERLENS_NET_IFACE:=default}     # default | wifi | ethernet
 : ${POWERLENS_REFRESH:=2}
 
 # ── multi mode thresholds ───────────────────────────────────

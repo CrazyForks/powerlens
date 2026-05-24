@@ -156,9 +156,17 @@ _powerlens_fmt_net() {
     fi
 }
 
+_powerlens_net_icon() {
+    case $1 in
+        wifi)     print -n "📶" ;;
+        ethernet) print -n "🔌" ;;
+        *)        print -n "🌐" ;;
+    esac
+}
+
 _powerlens_format() {
     local json=$1
-    local power battery charging cpu mem net_up net_down cpu_temp
+    local power battery charging cpu mem net_up net_down cpu_temp net_iface_type
     power=$(_powerlens_jget "$json" "power")
     battery=$(_powerlens_jget "$json" "battery")
     charging=$(_powerlens_jget "$json" "charging")
@@ -167,6 +175,7 @@ _powerlens_format() {
     cpu_temp=$(_powerlens_jget "$json" "cpu_temp")
     net_up=$(_powerlens_jget "$json" "net_up")
     net_down=$(_powerlens_jget "$json" "net_down")
+    net_iface_type=$(_powerlens_jget "$json" "net_iface_type")
 
     local sep=" "
     local result=""
@@ -213,11 +222,12 @@ _powerlens_format() {
 
     if [[ "$POWERLENS_SHOW_NET" == "true" ]]; then
         local nc="#aaaaaa"
-        local net_str
+        local net_icon net_str
+        net_icon=$(_powerlens_net_icon "$net_iface_type")
         if [[ "$POWERLENS_MODE" == "compact" ]]; then
-            net_str="↑$(_powerlens_fmt_net $net_up)↓$(_powerlens_fmt_net $net_down)"
+            net_str="${net_icon}↑$(_powerlens_fmt_net $net_up)↓$(_powerlens_fmt_net $net_down)"
         else
-            net_str="↑ $(_powerlens_fmt_net $net_up)  ↓ $(_powerlens_fmt_net $net_down)"
+            net_str="${net_icon} ↑ $(_powerlens_fmt_net $net_up)  ↓ $(_powerlens_fmt_net $net_down)"
         fi
         result+="${sep}$(_powerlens_wrap $nc "$net_str")"
     fi

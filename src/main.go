@@ -13,7 +13,7 @@ import (
 
 func main() {
 	daemon := flag.Bool("daemon", false, "run as background daemon")
-	iface := flag.String("iface", "auto", "network interface: auto | all | en0")
+	iface := flag.String("iface", "default", "network interface: default | wifi | ethernet")
 	refresh := flag.Int("refresh", 2, "poll interval in seconds")
 	flag.Parse()
 

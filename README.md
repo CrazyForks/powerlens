@@ -104,8 +104,19 @@ POWERLENS_SHOW_NET=true
 ### Network Interface
 
 ```zsh
-POWERLENS_NET_IFACE=auto      # auto (primary active) | en0 | all
+POWERLENS_NET_IFACE=default   # default | wifi | ethernet
 ```
+
+| Value | Behavior |
+|-------|----------|
+| `default` | Follows the default route — whichever interface the OS is routing traffic through (WiFi, Ethernet, or VPN). Icon updates automatically when the active interface changes. |
+| `wifi` | Always monitors the Wi-Fi interface. Falls back to 🌐 if Wi-Fi is inactive. |
+| `ethernet` | Always monitors the first wired Ethernet interface. Falls back to 🌐 if none is connected. |
+
+The interface type is shown as an icon prefix on the network display:
+- 📶 Wi-Fi
+- 🔌 Ethernet
+- 🌐 Other / VPN
 
 ### Refresh Interval
 

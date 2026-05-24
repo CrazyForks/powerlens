@@ -7,26 +7,84 @@ import (
 	"github.com/user/powerlens/collect"
 )
 
-func TestGetNetFirstSample(t *testing.T) {
-	var prev collect.NetSample
-	up, down, iface, err := collect.GetNet("auto", &prev)
+// TestResolveIfaceDefault verifies "default" mode returns a non-empty interface name and type.
+func TestResolveIfaceDefault(t *testing.T) {
+	name, ifaceType, err := collect.ResolveIface("default")
 	if err != nil {
-		t.Fatalf("GetNet error: %v", err)
+		t.Fatalf("ResolveIface(default) error: %v", err)
 	}
-	// First call with zero prev must return 0.0 (no baseline yet)
-	if up != 0 || down != 0 {
-		t.Errorf("first sample must be 0.0/0.0, got %.2f/%.2f", up, down)
+	if name == "" {
+		t.Error("ResolveIface(default) returned empty interface name")
 	}
-	if iface == "" {
-		t.Error("iface must not be empty")
+	if ifaceType == "" {
+		t.Error("ResolveIface(default) returned empty interface type")
 	}
 }
 
-func TestGetNetDelta(t *testing.T) {
+// TestResolveIfaceWifi verifies "wifi" mode finds a WiFi interface.
+func TestResolveIfaceWifi(t *testing.T) {
+	name, ifaceType, err := collect.ResolveIface("wifi")
+	if err != nil {
+		t.Skipf("no WiFi interface found (may not exist in this environment): %v", err)
+	}
+	if name == "" {
+		t.Error("ResolveIface(wifi) returned empty interface name")
+	}
+	if ifaceType != "wifi" {
+		t.Errorf("ResolveIface(wifi) type = %q, want %q", ifaceType, "wifi")
+	}
+}
+
+// TestResolveIfaceEthernet verifies "ethernet" mode finds a wired interface.
+func TestResolveIfaceEthernet(t *testing.T) {
+	name, ifaceType, err := collect.ResolveIface("ethernet")
+	if err != nil {
+		t.Skipf("no Ethernet interface found (may not be connected): %v", err)
+	}
+	if name == "" {
+		t.Error("ResolveIface(ethernet) returned empty interface name")
+	}
+	if ifaceType != "ethernet" {
+		t.Errorf("ResolveIface(ethernet) type = %q, want %q", ifaceType, "ethernet")
+	}
+}
+
+// TestResolveIfaceUnknownMode verifies unknown modes return an error.
+func TestResolveIfaceUnknownMode(t *testing.T) {
+	_, _, err := collect.ResolveIface("auto")
+	if err == nil {
+		t.Error("ResolveIface(auto) should return error for removed mode")
+	}
+	_, _, err = collect.ResolveIface("all")
+	if err == nil {
+		t.Error("ResolveIface(all) should return error for removed mode")
+	}
+}
+
+// TestGetNetFirstSampleDefault verifies first call returns 0/0 and a type.
+func TestGetNetFirstSampleDefault(t *testing.T) {
 	var prev collect.NetSample
-	collect.GetNet("auto", &prev) // seed prev
+	up, down, ifaceName, ifaceType, err := collect.GetNet("default", &prev)
+	if err != nil {
+		t.Fatalf("GetNet error: %v", err)
+	}
+	if up != 0 || down != 0 {
+		t.Errorf("first sample must be 0.0/0.0, got %.2f/%.2f", up, down)
+	}
+	if ifaceName == "" {
+		t.Error("ifaceName must not be empty")
+	}
+	if ifaceType == "" {
+		t.Error("ifaceType must not be empty")
+	}
+}
+
+// TestGetNetDeltaNonNegative verifies rate delta is always >= 0.
+func TestGetNetDeltaNonNegative(t *testing.T) {
+	var prev collect.NetSample
+	collect.GetNet("default", &prev) //nolint:errcheck // seed prev
 	time.Sleep(100 * time.Millisecond)
-	up, down, _, err := collect.GetNet("auto", &prev)
+	up, down, _, _, err := collect.GetNet("default", &prev)
 	if err != nil {
 		t.Fatalf("GetNet error: %v", err)
 	}
@@ -35,15 +93,13 @@ func TestGetNetDelta(t *testing.T) {
 	}
 }
 
-func TestResolveIface(t *testing.T) {
-	cases := []string{"auto", "all"}
-	for _, c := range cases {
-		name, err := collect.ResolveIface(c)
-		if err != nil {
-			t.Errorf("ResolveIface(%q) error: %v", c, err)
-		}
-		if name == "" {
-			t.Errorf("ResolveIface(%q) returned empty string", c)
-		}
+// TestGetNetInterfaceStability verifies the resolved interface name is stable across consecutive calls.
+func TestGetNetInterfaceStability(t *testing.T) {
+	var prev collect.NetSample
+	_, _, name1, _, _ := collect.GetNet("default", &prev) //nolint:errcheck
+	time.Sleep(50 * time.Millisecond)
+	_, _, name2, _, _ := collect.GetNet("default", &prev) //nolint:errcheck
+	if name1 != name2 {
+		t.Errorf("interface changed between polls: %q → %q", name1, name2)
 	}
 }

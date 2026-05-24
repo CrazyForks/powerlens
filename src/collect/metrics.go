@@ -8,16 +8,17 @@ import (
 )
 
 type Metrics struct {
-	Power    float64 `json:"power"`
-	Battery  int     `json:"battery"`
-	Charging bool    `json:"charging"`
-	CpuTemp  float64 `json:"cpu_temp"` // °C; -1 = unavailable
-	CPU      float64 `json:"cpu"`
-	Mem      float64 `json:"mem"`
-	NetUp    float64 `json:"net_up"`
-	NetDown  float64 `json:"net_down"`
-	NetIface string  `json:"net_iface"`
-	Ts       int64   `json:"ts"`
+	Power        float64 `json:"power"`
+	Battery      int     `json:"battery"`
+	Charging     bool    `json:"charging"`
+	CpuTemp      float64 `json:"cpu_temp"` // °C; -1 = unavailable
+	CPU          float64 `json:"cpu"`
+	Mem          float64 `json:"mem"`
+	NetUp        float64 `json:"net_up"`
+	NetDown      float64 `json:"net_down"`
+	NetIface     string  `json:"net_iface"`
+	NetIfaceType string  `json:"net_iface_type"` // wifi | ethernet | other
+	Ts           int64   `json:"ts"`
 }
 
 func WriteJSON(path string, m Metrics) error {
@@ -62,9 +63,9 @@ func All(iface string, prev *NetSample) (Metrics, error) {
 		m.Mem = mem
 	}
 
-	up, down, ifaceName, err := GetNet(iface, prev)
+	up, down, ifaceName, ifaceType, err := GetNet(iface, prev)
 	if err == nil {
-		m.NetUp, m.NetDown, m.NetIface = up, down, ifaceName
+		m.NetUp, m.NetDown, m.NetIface, m.NetIfaceType = up, down, ifaceName, ifaceType
 	}
 	return m, nil
 }
