@@ -41,10 +41,11 @@
   <rect x="178" y="89" width="8" height="14" class="cursor" opacity="0.8"/>
 
   <!-- RPROMPT — Idle: all green, right-aligned -->
-  <text x="514" y="101" text-anchor="end" font-family="'SF Mono','Fira Code',monospace" font-size="13" fill="#00ff9f">⚡8W</text>
-  <text x="562" y="101" text-anchor="end" font-family="'SF Mono','Fira Code',monospace" font-size="13" fill="#00ff9f">🔋94%</text>
-  <text x="612" y="101" text-anchor="end" font-family="'SF Mono','Fira Code',monospace" font-size="13" fill="#00ff9f">⚙9%</text>
-  <text x="660" y="101" text-anchor="end" font-family="'SF Mono','Fira Code',monospace" font-size="13" fill="#00ff9f">🧠34%</text>
+  <text x="476" y="101" text-anchor="end" font-family="'SF Mono','Fira Code',monospace" font-size="13" fill="#00ff9f">⚡8W</text>
+  <text x="522" y="101" text-anchor="end" font-family="'SF Mono','Fira Code',monospace" font-size="13" fill="#00ff9f">🔋94%</text>
+  <text x="564" y="101" text-anchor="end" font-family="'SF Mono','Fira Code',monospace" font-size="13" fill="#00ff9f">⚙9%</text>
+  <text x="610" y="101" text-anchor="end" font-family="'SF Mono','Fira Code',monospace" font-size="13" fill="#00ff9f">🌡42°</text>
+  <text x="658" y="101" text-anchor="end" font-family="'SF Mono','Fira Code',monospace" font-size="13" fill="#00ff9f">🧠34%</text>
   <text x="760" y="101" text-anchor="end" font-family="'SF Mono','Fira Code',monospace" font-size="13" fill="#6e7681">↑0.1M↓0.2M</text>
 
   <!-- ═══════════════════════════════════════ -->
@@ -58,10 +59,11 @@
   <text x="183" y="173" font-family="'SF Mono','Fira Code',monospace" font-size="13" fill="#6e7681">make test</text>
 
   <!-- RPROMPT — Moderate: mixed colors, right-aligned -->
-  <text x="514" y="173" text-anchor="end" font-family="'SF Mono','Fira Code',monospace" font-size="13" fill="#00d4ff">⚡28W</text>
-  <text x="562" y="173" text-anchor="end" font-family="'SF Mono','Fira Code',monospace" font-size="13" fill="#00d4ff">🔋78%</text>
-  <text x="612" y="173" text-anchor="end" font-family="'SF Mono','Fira Code',monospace" font-size="13" fill="#ff006e">⚙72%</text>
-  <text x="660" y="173" text-anchor="end" font-family="'SF Mono','Fira Code',monospace" font-size="13" fill="#00d4ff">🧠58%</text>
+  <text x="476" y="173" text-anchor="end" font-family="'SF Mono','Fira Code',monospace" font-size="13" fill="#00d4ff">⚡28W</text>
+  <text x="522" y="173" text-anchor="end" font-family="'SF Mono','Fira Code',monospace" font-size="13" fill="#00d4ff">🔋78%</text>
+  <text x="564" y="173" text-anchor="end" font-family="'SF Mono','Fira Code',monospace" font-size="13" fill="#ff006e">⚙72%</text>
+  <text x="610" y="173" text-anchor="end" font-family="'SF Mono','Fira Code',monospace" font-size="13" fill="#00d4ff">🌡67°</text>
+  <text x="658" y="173" text-anchor="end" font-family="'SF Mono','Fira Code',monospace" font-size="13" fill="#00d4ff">🧠58%</text>
   <text x="760" y="173" text-anchor="end" font-family="'SF Mono','Fira Code',monospace" font-size="13" fill="#6e7681">↑0.3M↓1.1M</text>
 
   <!-- ═══════════════════════════════════════ -->
@@ -75,10 +77,11 @@
   <text x="183" y="245" font-family="'SF Mono','Fira Code',monospace" font-size="13" fill="#6e7681">python train.py</text>
 
   <!-- RPROMPT — Peak: orange/pink across the board, right-aligned -->
-  <text x="514" y="245" text-anchor="end" font-family="'SF Mono','Fira Code',monospace" font-size="13" fill="#ff9500">⚡62W</text>
-  <text x="562" y="245" text-anchor="end" font-family="'SF Mono','Fira Code',monospace" font-size="13" fill="#00d4ff">🔋55%</text>
-  <text x="612" y="245" text-anchor="end" font-family="'SF Mono','Fira Code',monospace" font-size="13" fill="#ff9500">⚙91%</text>
-  <text x="660" y="245" text-anchor="end" font-family="'SF Mono','Fira Code',monospace" font-size="13" fill="#ff9500">🧠88%</text>
+  <text x="476" y="245" text-anchor="end" font-family="'SF Mono','Fira Code',monospace" font-size="13" fill="#ff9500">⚡62W</text>
+  <text x="522" y="245" text-anchor="end" font-family="'SF Mono','Fira Code',monospace" font-size="13" fill="#00d4ff">🔋55%</text>
+  <text x="564" y="245" text-anchor="end" font-family="'SF Mono','Fira Code',monospace" font-size="13" fill="#ff9500">⚙91%</text>
+  <text x="610" y="245" text-anchor="end" font-family="'SF Mono','Fira Code',monospace" font-size="13" fill="#ff9500">🌡85°</text>
+  <text x="658" y="245" text-anchor="end" font-family="'SF Mono','Fira Code',monospace" font-size="13" fill="#ff9500">🧠88%</text>
   <text x="760" y="245" text-anchor="end" font-family="'SF Mono','Fira Code',monospace" font-size="13" fill="#6e7681">↑2.4M↓8.7M</text>
 
   <!-- ═══════════════════════════════════════ -->
@@ -92,10 +95,11 @@
   <rect x="58" y="305" width="8" height="14" class="cursor" opacity="0.8"/>
 
   <!-- RPROMPT — Full mode with units, right-aligned -->
-  <text x="389" y="317" text-anchor="end" font-family="'SF Mono','Fira Code',monospace" font-size="13" fill="#00d4ff">⚡ 38.4W</text>
-  <text x="446" y="317" text-anchor="end" font-family="'SF Mono','Fira Code',monospace" font-size="13" fill="#00d4ff">🔋 72%</text>
-  <text x="513" y="317" text-anchor="end" font-family="'SF Mono','Fira Code',monospace" font-size="13" fill="#ff006e">⚙ 47.3%</text>
-  <text x="586" y="317" text-anchor="end" font-family="'SF Mono','Fira Code',monospace" font-size="13" fill="#ff006e">🧠 76.8%</text>
+  <text x="330" y="317" text-anchor="end" font-family="'SF Mono','Fira Code',monospace" font-size="13" fill="#00d4ff">⚡38.4W</text>
+  <text x="387" y="317" text-anchor="end" font-family="'SF Mono','Fira Code',monospace" font-size="13" fill="#00d4ff">🔋72%</text>
+  <text x="452" y="317" text-anchor="end" font-family="'SF Mono','Fira Code',monospace" font-size="13" fill="#ff006e">⚙47.3%</text>
+  <text x="522" y="317" text-anchor="end" font-family="'SF Mono','Fira Code',monospace" font-size="13" fill="#00d4ff">🌡58.2°C</text>
+  <text x="591" y="317" text-anchor="end" font-family="'SF Mono','Fira Code',monospace" font-size="13" fill="#ff006e">🧠76.8%</text>
   <text x="760" y="317" text-anchor="end" font-family="'SF Mono','Fira Code',monospace" font-size="13" fill="#6e7681">↑ 2.4MB/s  ↓ 8.1MB/s</text>
 
   <!-- ═══════════════════════════════════════ -->
@@ -109,10 +113,11 @@
   <rect x="136" y="377" width="8" height="14" class="cursor" opacity="0.8"/>
 
   <!-- RPROMPT — Alert: gray for under-threshold, orange for over, right-aligned -->
-  <text x="514" y="389" text-anchor="end" font-family="'SF Mono','Fira Code',monospace" font-size="13" fill="#aaaaaa">⚡42W</text>
-  <text x="562" y="389" text-anchor="end" font-family="'SF Mono','Fira Code',monospace" font-size="13" fill="#aaaaaa">🔋81%</text>
-  <text x="612" y="389" text-anchor="end" font-family="'SF Mono','Fira Code',monospace" font-size="13" fill="#aaaaaa">⚙44%</text>
-  <text x="660" y="389" text-anchor="end" font-family="'SF Mono','Fira Code',monospace" font-size="13" fill="#ff9500">🧠87%</text>
+  <text x="476" y="389" text-anchor="end" font-family="'SF Mono','Fira Code',monospace" font-size="13" fill="#aaaaaa">⚡42W</text>
+  <text x="522" y="389" text-anchor="end" font-family="'SF Mono','Fira Code',monospace" font-size="13" fill="#aaaaaa">🔋81%</text>
+  <text x="564" y="389" text-anchor="end" font-family="'SF Mono','Fira Code',monospace" font-size="13" fill="#aaaaaa">⚙44%</text>
+  <text x="610" y="389" text-anchor="end" font-family="'SF Mono','Fira Code',monospace" font-size="13" fill="#aaaaaa">🌡72°</text>
+  <text x="658" y="389" text-anchor="end" font-family="'SF Mono','Fira Code',monospace" font-size="13" fill="#ff9500">🧠87%</text>
   <text x="760" y="389" text-anchor="end" font-family="'SF Mono','Fira Code',monospace" font-size="13" fill="#aaaaaa">↑0.8M↓3.2M</text>
 
   <!-- Annotation arrow + label for alert mode -->
