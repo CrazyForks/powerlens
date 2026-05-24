@@ -149,10 +149,18 @@ _powerlens_fmt_num() {
 
 _powerlens_fmt_net() {
     local val=$1
-    if [[ "$POWERLENS_MODE" == "compact" ]]; then
-        printf "%.1fM" "$val"
+    local num
+    if (( val >= 1000 )); then
+        num=$(( val / 1000.0 ))
+        [[ "$POWERLENS_MODE" == "compact" ]] && printf "%.1fG" "$num" || printf "%.1fGB/s" "$num"
+    elif (( val >= 1 )); then
+        [[ "$POWERLENS_MODE" == "compact" ]] && printf "%.1fM" "$val" || printf "%.1fMB/s" "$val"
+    elif (( val >= 0.001 )); then
+        num=$(( val * 1000 ))
+        [[ "$POWERLENS_MODE" == "compact" ]] && printf "%.1fK" "$num" || printf "%.1fKB/s" "$num"
     else
-        printf "%.1fMB/s" "$val"
+        num=$(( val * 1000000 ))
+        [[ "$POWERLENS_MODE" == "compact" ]] && printf "%.0fB" "$num" || printf "%.0fB/s" "$num"
     fi
 }
 
