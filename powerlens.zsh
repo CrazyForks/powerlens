@@ -258,7 +258,7 @@ _powerlens_init() {
     _POWERLENS_DEGRADED=$(_powerlens_degraded)
     _powerlens_start_daemon
     precmd() { _powerlens_update_rprompt }
-    zshexit() { _powerlens_stop_daemon }
+    zshexit() { (( $+functions[_powerlens_stop_daemon] )) && _powerlens_stop_daemon }
     zle -N zle-line-finish _powerlens_zle_line_finish
     if (( ${TMOUT:-0} == 0 || ${TMOUT:-0} > POWERLENS_REFRESH )); then
         TMOUT=$POWERLENS_REFRESH
