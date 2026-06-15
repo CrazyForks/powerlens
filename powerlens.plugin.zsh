@@ -11,6 +11,7 @@
 : ${POWERLENS_SHOW_MEM:=true}
 : ${POWERLENS_SHOW_NET:=true}
 : ${POWERLENS_SHOW_TEMP:=true}
+: ${POWERLENS_SHOW_FAN:=true}
 
 # ── Network ─────────────────────────────────────────────────
 : ${POWERLENS_NET_IFACE:=default}     # default | wifi | ethernet
@@ -37,8 +38,6 @@
 : ${POWERLENS_ALERT_TEMP:=80}      # °C
 
 # ── fan speed ────────────────────────────────────────────
-: ${POWERLENS_SHOW_FAN:=true}
-
 : ${POWERLENS_THRESH_FAN_IDLE:=2000}
 : ${POWERLENS_THRESH_FAN_LIGHT:=3500}
 : ${POWERLENS_THRESH_FAN_MODERATE:=5000}

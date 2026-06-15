@@ -230,9 +230,9 @@ _powerlens_format() {
         local fc=$(_powerlens_color fan $fan_speed)
         local fan_str
         if [[ "$POWERLENS_MODE" == "full" ]]; then
-            fan_str="🌀 $(printf "%.0f" $fan_speed) RPM"
+            fan_str="🌀 $(_powerlens_fmt_num $fan_speed) RPM"
         else
-            fan_str="🌀$(printf "%.0f" $fan_speed)"
+            fan_str="🌀$(_powerlens_fmt_num $fan_speed)"
         fi
         result+="${sep}$(_powerlens_wrap $fc "$fan_str")"
     fi
