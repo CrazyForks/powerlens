@@ -86,6 +86,10 @@ double getFanSpeedAvg() {
 		IOServiceClose(conn);
 		return -1.0;
 	}
+	if (out.keyInfo.dataSize < 1) {
+		IOServiceClose(conn);
+		return -1.0;
+	}
 	FanSMCKeyData_t in2 = {0}, out2 = {0};
 	in2.key              = fanSmcKey("FNum");
 	in2.keyInfo.dataSize = out.keyInfo.dataSize;
@@ -112,6 +116,7 @@ double getFanSpeedAvg() {
 		ki.key   = fanSmcKey(keyStr);
 		ki.data8 = SMC_CMD_READ_KEYINFO;
 		if (fanSmcCall(conn, KERNEL_INDEX_SMC, &ki, &ko) != kIOReturnSuccess) continue;
+		if (ko.keyInfo.dataSize < 2) continue;
 
 		FanSMCKeyData_t ri = {0}, ro = {0};
 		ri.key              = fanSmcKey(keyStr);
@@ -122,7 +127,7 @@ double getFanSpeedAvg() {
 		// fpe2: 2 bytes big-endian, divide by 4
 		uint16_t raw = ((uint16_t)(uint8_t)ro.bytes[0] << 8) | (uint8_t)ro.bytes[1];
 		double rpm = (double)raw / 4.0;
-		if (rpm >= 0) {
+		if (rpm > 0) {
 			total += rpm;
 			count++;
 		}
