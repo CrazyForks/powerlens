@@ -11,7 +11,8 @@ type Metrics struct {
 	Power        float64 `json:"power"`
 	Battery      int     `json:"battery"`
 	Charging     bool    `json:"charging"`
-	CpuTemp      float64 `json:"cpu_temp"` // °C; -1 = unavailable
+	CpuTemp      float64 `json:"cpu_temp"`  // °C; -1 = unavailable
+	FanSpeed     float64 `json:"fan_speed"` // RPM avg; -1 = fanless/unavailable
 	CPU          float64 `json:"cpu"`
 	Mem          float64 `json:"mem"`
 	NetUp        float64 `json:"net_up"`
@@ -52,6 +53,7 @@ func All(iface string, prev *NetSample) (Metrics, error) {
 	m.Ts = time.Now().Unix()
 
 	m.Power, m.Battery, m.Charging, m.CpuTemp, _ = GetPowerAndTemp()
+	m.FanSpeed = GetFanSpeed()
 
 	cpu, err := GetCPU()
 	if err == nil {

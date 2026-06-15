@@ -39,12 +39,16 @@ func TestCollectAll(t *testing.T) {
 	if m.Mem < 0 || m.Mem > 100 {
 		t.Errorf("Mem out of range: %.1f", m.Mem)
 	}
+	if m.FanSpeed != -1 && (m.FanSpeed < 0 || m.FanSpeed > 20000) {
+		t.Errorf("FanSpeed out of range: %.0f", m.FanSpeed)
+	}
 }
 
 func TestWriteJSON(t *testing.T) {
 	m := collect.Metrics{
 		Power: 42.7, Battery: 87, Charging: false,
 		CPU: 34.2, Mem: 62.1,
+		FanSpeed: 1500.0,
 		NetUp: 1.2, NetDown: 3.8, NetIface: "en0",
 		Ts: 1706000000,
 	}
@@ -63,7 +67,7 @@ func TestWriteJSON(t *testing.T) {
 	if err := json.Unmarshal(data, &got); err != nil {
 		t.Fatalf("unmarshal error: %v", err)
 	}
-	if got.Power != 42.7 || got.NetIface != "en0" || got.Ts != 1706000000 {
+	if got.Power != 42.7 || got.NetIface != "en0" || got.Ts != 1706000000 || got.FanSpeed != 1500.0 {
 		t.Errorf("round-trip mismatch: %+v", got)
 	}
 }
