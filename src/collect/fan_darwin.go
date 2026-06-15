@@ -104,23 +104,28 @@ double getFanSpeedAvg() {
 		return -1.0;
 	}
 
-	// Read each fan's actual speed (F0Ac, F1Ac, ...)
-	// fpe2: 16-bit big-endian unsigned, 2 fractional bits → divide by 4 for RPM
+	// Read each fan's actual speed (F0Ac, F1Ac, ...). SMC stores these as either:
+	//   fpe2 — older Macs: 16-bit big-endian unsigned, 2 fractional bits → ÷4 for RPM
+	//   flt  — T2/newer Macs (incl. Apple Silicon): 32-bit little-endian IEEE-754 = RPM
+	uint32_t fpe2type = ((uint32_t)'f' << 24) | ((uint32_t)'p' << 16)
+	                  | ((uint32_t)'e' <<  8) | (uint32_t)'2';
+	uint32_t flttype  = ((uint32_t)'f' << 24) | ((uint32_t)'l' << 16)
+	                  | ((uint32_t)'t' <<  8) | (uint32_t)' ';
+
 	double total = 0.0;
 	int    count = 0;
 	for (int i = 0; i < numFans && i < 10; i++) {
 		char keyStr[5];
 		snprintf(keyStr, sizeof(keyStr), "F%dAc", i);
 
-		// Define fpe2 type: unsigned fixed-point, 2 fractional bits (4 chars big-endian)
-		uint32_t fpe2type = ((uint32_t)'f' << 24) | ((uint32_t)'p' << 16)
-		                  | ((uint32_t)'e' <<  8) | (uint32_t)'2';
-
 		FanSMCKeyData_t ki = {0}, ko = {0};
 		ki.key   = fanSmcKey(keyStr);
 		ki.data8 = SMC_CMD_READ_KEYINFO;
 		if (fanSmcCall(conn, KERNEL_INDEX_SMC, &ki, &ko) != kIOReturnSuccess) continue;
-		if (ko.keyInfo.dataType != fpe2type || ko.keyInfo.dataSize < 2) continue;
+
+		int isFpe2 = (ko.keyInfo.dataType == fpe2type && ko.keyInfo.dataSize >= 2);
+		int isFlt  = (ko.keyInfo.dataType == flttype  && ko.keyInfo.dataSize >= 4);
+		if (!isFpe2 && !isFlt) continue;
 
 		FanSMCKeyData_t ri = {0}, ro = {0};
 		ri.key              = fanSmcKey(keyStr);
@@ -128,10 +133,19 @@ double getFanSpeedAvg() {
 		ri.data8            = SMC_CMD_READ_BYTES;
 		if (fanSmcCall(conn, KERNEL_INDEX_SMC, &ri, &ro) != kIOReturnSuccess) continue;
 
-		// fpe2: 2 bytes big-endian, divide by 4
-		uint16_t raw = ((uint16_t)(uint8_t)ro.bytes[0] << 8) | (uint8_t)ro.bytes[1];
-		double rpm = (double)raw / 4.0;
-		if (rpm > 0) {
+		double rpm;
+		if (isFlt) {
+			float f;
+			memcpy(&f, ro.bytes, 4); // little-endian IEEE-754, RPM directly
+			rpm = (double)f;
+		} else {
+			// fpe2: 2 bytes big-endian, divide by 4
+			uint16_t raw = ((uint16_t)(uint8_t)ro.bytes[0] << 8) | (uint8_t)ro.bytes[1];
+			rpm = (double)raw / 4.0;
+		}
+		// A successful read of an idle fan reports 0 RPM; count it as present
+		// (FNum already confirmed the fan exists) so the daemon reports 0, not -1.
+		if (rpm >= 0) {
 			total += rpm;
 			count++;
 		}
