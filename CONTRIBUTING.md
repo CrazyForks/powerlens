@@ -46,7 +46,7 @@ powerlens.zsh            # Main plugin entry point (sourced by zsh)
 powerlens.plugin.zsh     # Oh-My-Zsh plugin wrapper
 src/
   main.go                # Daemon entry point
-  collect/               # Metric collectors (CPU, memory, battery, network, temp)
+  collect/               # Metric collectors (CPU, memory, battery, network, temp, fan)
   go.mod / go.sum
 bin/                     # Pre-compiled daemon binaries (not committed to git)
 assets/                  # Demo and reference SVGs
