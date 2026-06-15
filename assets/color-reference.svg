@@ -28,26 +28,30 @@
   <text x="80"  y="110" text-anchor="middle" font-family="'SF Mono','Fira Code',monospace" font-size="10" fill="#6e7681">power &lt; 10W</text>
   <text x="80"  y="123" text-anchor="middle" font-family="'SF Mono','Fira Code',monospace" font-size="10" fill="#6e7681">cpu &lt; 30%</text>
   <text x="80"  y="136" text-anchor="middle" font-family="'SF Mono','Fira Code',monospace" font-size="10" fill="#6e7681">mem &lt; 50%</text>
+  <text x="80"  y="149" text-anchor="middle" font-family="'SF Mono','Fira Code',monospace" font-size="10" fill="#6e7681">fan &lt; 2000</text>
 
   <text x="230" y="110" text-anchor="middle" font-family="'SF Mono','Fira Code',monospace" font-size="10" fill="#6e7681">power &lt; 30W</text>
   <text x="230" y="123" text-anchor="middle" font-family="'SF Mono','Fira Code',monospace" font-size="10" fill="#6e7681">cpu &lt; 60%</text>
   <text x="230" y="136" text-anchor="middle" font-family="'SF Mono','Fira Code',monospace" font-size="10" fill="#6e7681">mem &lt; 70%</text>
+  <text x="230" y="149" text-anchor="middle" font-family="'SF Mono','Fira Code',monospace" font-size="10" fill="#6e7681">fan &lt; 3500</text>
 
   <text x="380" y="110" text-anchor="middle" font-family="'SF Mono','Fira Code',monospace" font-size="10" fill="#6e7681">power &lt; 50W</text>
   <text x="380" y="123" text-anchor="middle" font-family="'SF Mono','Fira Code',monospace" font-size="10" fill="#6e7681">cpu &lt; 85%</text>
   <text x="380" y="136" text-anchor="middle" font-family="'SF Mono','Fira Code',monospace" font-size="10" fill="#6e7681">mem &lt; 85%</text>
+  <text x="380" y="149" text-anchor="middle" font-family="'SF Mono','Fira Code',monospace" font-size="10" fill="#6e7681">fan &lt; 5000</text>
 
   <text x="530" y="110" text-anchor="middle" font-family="'SF Mono','Fira Code',monospace" font-size="10" fill="#6e7681">power ≥ 50W</text>
   <text x="530" y="123" text-anchor="middle" font-family="'SF Mono','Fira Code',monospace" font-size="10" fill="#6e7681">cpu ≥ 85%</text>
   <text x="530" y="136" text-anchor="middle" font-family="'SF Mono','Fira Code',monospace" font-size="10" fill="#6e7681">mem ≥ 85%</text>
+  <text x="530" y="149" text-anchor="middle" font-family="'SF Mono','Fira Code',monospace" font-size="10" fill="#6e7681">fan ≥ 5000</text>
 
   <text x="660" y="110" text-anchor="middle" font-family="'SF Mono','Fira Code',monospace" font-size="10" fill="#6e7681">always neutral</text>
   <text x="660" y="123" text-anchor="middle" font-family="'SF Mono','Fira Code',monospace" font-size="10" fill="#6e7681">(no threshold)</text>
 
   <!-- Hex labels -->
-  <text x="80"  y="158" text-anchor="middle" font-family="'SF Mono','Fira Code',monospace" font-size="10" fill="#00FF9F">#00FF9F</text>
-  <text x="230" y="158" text-anchor="middle" font-family="'SF Mono','Fira Code',monospace" font-size="10" fill="#00D4FF">#00D4FF</text>
-  <text x="380" y="158" text-anchor="middle" font-family="'SF Mono','Fira Code',monospace" font-size="10" fill="#FF006E">#FF006E</text>
-  <text x="530" y="158" text-anchor="middle" font-family="'SF Mono','Fira Code',monospace" font-size="10" fill="#FF9500">#FF9500</text>
-  <text x="660" y="158" text-anchor="middle" font-family="'SF Mono','Fira Code',monospace" font-size="10" fill="#aaaaaa">#aaaaaa</text>
+  <text x="80"  y="170" text-anchor="middle" font-family="'SF Mono','Fira Code',monospace" font-size="10" fill="#00FF9F">#00FF9F</text>
+  <text x="230" y="170" text-anchor="middle" font-family="'SF Mono','Fira Code',monospace" font-size="10" fill="#00D4FF">#00D4FF</text>
+  <text x="380" y="170" text-anchor="middle" font-family="'SF Mono','Fira Code',monospace" font-size="10" fill="#FF006E">#FF006E</text>
+  <text x="530" y="170" text-anchor="middle" font-family="'SF Mono','Fira Code',monospace" font-size="10" fill="#FF9500">#FF9500</text>
+  <text x="660" y="170" text-anchor="middle" font-family="'SF Mono','Fira Code',monospace" font-size="10" fill="#aaaaaa">#aaaaaa</text>
 </svg>

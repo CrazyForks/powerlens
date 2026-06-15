@@ -93,7 +93,7 @@ POWERLENS_COLOR_MODE=multi    # multi   | alert
 
 **`full`**:
 ```
-⚡ 38.4W 🔋 87% ⚙ 34.2% 🌡 55.0°C 🌀 1200.0 RPM 🧠 62.1% ↑ 1.2MB/s ↓ 3.8MB/s
+⚡ 38.4W 🔋 87% ⚙ 34.2% 🌡 55.0°C 🌀 1200RPM 🧠 62.1% ↑ 1.2MB/s ↓ 3.8MB/s
 ```
 
 ### Show / Hide Metrics
