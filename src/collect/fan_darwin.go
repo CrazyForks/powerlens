@@ -112,11 +112,15 @@ double getFanSpeedAvg() {
 		char keyStr[5];
 		snprintf(keyStr, sizeof(keyStr), "F%dAc", i);
 
+		// Define fpe2 type: unsigned fixed-point, 2 fractional bits (4 chars big-endian)
+		uint32_t fpe2type = ((uint32_t)'f' << 24) | ((uint32_t)'p' << 16)
+		                  | ((uint32_t)'e' <<  8) | (uint32_t)'2';
+
 		FanSMCKeyData_t ki = {0}, ko = {0};
 		ki.key   = fanSmcKey(keyStr);
 		ki.data8 = SMC_CMD_READ_KEYINFO;
 		if (fanSmcCall(conn, KERNEL_INDEX_SMC, &ki, &ko) != kIOReturnSuccess) continue;
-		if (ko.keyInfo.dataSize < 2) continue;
+		if (ko.keyInfo.dataType != fpe2type || ko.keyInfo.dataSize < 2) continue;
 
 		FanSMCKeyData_t ri = {0}, ro = {0};
 		ri.key              = fanSmcKey(keyStr);
