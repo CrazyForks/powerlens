@@ -34,7 +34,16 @@
 : ${POWERLENS_ALERT_POWER:=50}
 : ${POWERLENS_ALERT_CPU:=80}
 : ${POWERLENS_ALERT_MEM:=85}
-: ${POWERLENS_ALERT_TEMP:=80}
+: ${POWERLENS_ALERT_TEMP:=80}      # °C
+
+# ── fan speed ────────────────────────────────────────────
+: ${POWERLENS_SHOW_FAN:=true}
+
+: ${POWERLENS_THRESH_FAN_IDLE:=2000}
+: ${POWERLENS_THRESH_FAN_LIGHT:=3500}
+: ${POWERLENS_THRESH_FAN_MODERATE:=5000}
+
+: ${POWERLENS_ALERT_FAN:=4000}
 
 # Load core plugin
 source "${0:h}/powerlens.zsh"

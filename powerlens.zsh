@@ -106,6 +106,7 @@ _powerlens_color() {
             cpu)   threshold=$POWERLENS_ALERT_CPU   ;;
             mem)   threshold=$POWERLENS_ALERT_MEM   ;;
             temp)  threshold=$POWERLENS_ALERT_TEMP  ;;
+            fan)   threshold=$POWERLENS_ALERT_FAN   ;;
         esac
         if (( value > threshold )); then
             print -n "#FF9500"
@@ -121,6 +122,7 @@ _powerlens_color() {
         cpu)   idle=$POWERLENS_THRESH_CPU_IDLE;   light=$POWERLENS_THRESH_CPU_LIGHT;   moderate=$POWERLENS_THRESH_CPU_MODERATE ;;
         mem)   idle=$POWERLENS_THRESH_MEM_IDLE;   light=$POWERLENS_THRESH_MEM_LIGHT;   moderate=$POWERLENS_THRESH_MEM_MODERATE ;;
         temp)  idle=$POWERLENS_THRESH_TEMP_IDLE;  light=$POWERLENS_THRESH_TEMP_LIGHT;  moderate=$POWERLENS_THRESH_TEMP_MODERATE ;;
+        fan)   idle=$POWERLENS_THRESH_FAN_IDLE;   light=$POWERLENS_THRESH_FAN_LIGHT;   moderate=$POWERLENS_THRESH_FAN_MODERATE ;;
     esac
 
     if   (( value < idle     )); then print -n "#00FF9F"
@@ -174,7 +176,7 @@ _powerlens_net_icon() {
 
 _powerlens_format() {
     local json=$1
-    local power battery charging cpu mem net_up net_down cpu_temp net_iface_type
+    local power battery charging cpu mem net_up net_down cpu_temp fan_speed net_iface_type
     power=$(_powerlens_jget "$json" "power")
     battery=$(_powerlens_jget "$json" "battery")
     charging=$(_powerlens_jget "$json" "charging")
@@ -184,6 +186,7 @@ _powerlens_format() {
     net_up=$(_powerlens_jget "$json" "net_up")
     net_down=$(_powerlens_jget "$json" "net_down")
     net_iface_type=$(_powerlens_jget "$json" "net_iface_type")
+    fan_speed=$(_powerlens_jget "$json" "fan_speed")
 
     local sep=" "
     local result=""
@@ -221,6 +224,17 @@ _powerlens_format() {
             fi
         fi
         result+="${sep}$(_powerlens_wrap $tc "$temp_str")"
+    fi
+
+    if [[ "$POWERLENS_SHOW_FAN" == "true" && -n "$fan_speed" && "$fan_speed" != "-1" ]]; then
+        local fc=$(_powerlens_color fan $fan_speed)
+        local fan_str
+        if [[ "$POWERLENS_MODE" == "full" ]]; then
+            fan_str="🌀 $(printf "%.0f" $fan_speed) RPM"
+        else
+            fan_str="🌀$(printf "%.0f" $fan_speed)"
+        fi
+        result+="${sep}$(_powerlens_wrap $fc "$fan_str")"
     fi
 
     if [[ "$POWERLENS_SHOW_MEM" == "true" ]]; then
