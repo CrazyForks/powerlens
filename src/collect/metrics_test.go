@@ -49,7 +49,7 @@ func TestWriteJSON(t *testing.T) {
 		Power: 42.7, Battery: 87, Charging: false,
 		CPU: 34.2, Mem: 62.1,
 		FanSpeed: 1500.0,
-		NetUp: 1.2, NetDown: 3.8, NetIface: "en0",
+		NetUp:    1.2, NetDown: 3.8, NetIface: "en0",
 		Ts: 1706000000,
 	}
 	dir := t.TempDir()
