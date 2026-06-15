@@ -191,9 +191,10 @@ POWERLENS_ALERT_FAN=4000      # RPM
 │                      │                               │
 │      ┌───────────────▼──────────────────────┐        │
 │      │  powerlens-fetch  (singleton daemon)  │        │
-│      │  · IOKit → power/battery              │        │
-│      │  · gopsutil → CPU, memory, network   │        │
-│      │  · writes metrics.json every 2s      │        │
+│      │  · IOKit → power, battery             │        │
+│      │  · IOKit/SMC → CPU temp, fan speed    │        │
+│      │  · gopsutil → CPU, memory, network    │        │
+│      │  · writes metrics.json every 2s       │        │
 │      └──────────────────────────────────────┘        │
 └──────────────────────────────────────────────────────┘
 ```
