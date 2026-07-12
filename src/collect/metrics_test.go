@@ -14,10 +14,13 @@ func TestGetPower(t *testing.T) {
 	if err != nil {
 		t.Fatalf("GetPowerAndTemp error: %v", err)
 	}
-	if p < 0 || p > 500 {
+	// -1 is the sentinel for "unavailable" (CI VMs have no battery and no
+	// powermetrics privileges), so exempt it from the range check.
+	if p != -1 && (p < 0 || p > 500) {
 		t.Errorf("power out of range: %.1f W", p)
 	}
-	if b < 0 || b > 100 {
+	// -1 is the sentinel for "no battery" (CI VMs run headless), so exempt it.
+	if b != -1 && (b < 0 || b > 100) {
 		t.Errorf("battery out of range: %d %%", b)
 	}
 	_ = charging
