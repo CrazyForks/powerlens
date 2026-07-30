@@ -38,6 +38,17 @@ assert_dir() {
     fi
 }
 
+assert_absent() {
+    local path=$1
+    if [[ ! -e "$path" && ! -L "$path" ]]; then
+        (( ++PASS ))
+        print "  PASS: path absent: $path"
+    else
+        (( ++FAIL ))
+        print -u2 "  FAIL: expected path to be absent: $path"
+    fi
+}
+
 assert_true() {
     local desc=$1 condition=$2
     if eval "$condition"; then
@@ -77,9 +88,37 @@ line_number() {
     grep -n -F -- "$text" "$file_path" 2>/dev/null | head -n 1 | cut -d: -f1
 }
 
+directory_snapshot() {
+    find "$1" -mindepth 1 -maxdepth 1 -print 2>/dev/null | sort
+}
+
+count_install_temps() {
+    local parent_dir=$1
+    local -a temporary_dirs
+
+    temporary_dirs=("$parent_dir"/.powerlens-install-*(N))
+    print ${#temporary_dirs}
+}
+
+make_test_uname() {
+    local bin_dir=$1 system_name=$2 architecture=$3
+
+    mkdir -p -- "$bin_dir"
+    {
+        print -r -- '#!/usr/bin/env zsh'
+        print -r -- 'case "$1" in'
+        print -r -- "    -s) print -r -- ${(qqq)system_name} ;;"
+        print -r -- "    -m) print -r -- ${(qqq)architecture} ;;"
+        print -r -- '    *) command /usr/bin/uname "$@" ;;'
+        print -r -- 'esac'
+    } > "$bin_dir/uname"
+    chmod +x "$bin_dir/uname"
+}
+
 run_installer() {
     local home_dir=$1 install_dir=$2 repo_url=$3 error_file=$4
 
+    mkdir -p -- "$home_dir"
     env \
       HOME="$home_dir" \
       SHELL=/bin/zsh \
@@ -107,7 +146,175 @@ chmod +x "$origin/bin/powerlens-fetch-arm64" "$origin/bin/powerlens-fetch-amd64"
 git -C "$origin" add powerlens.plugin.zsh powerlens.zsh bin
 git -C "$origin" commit -m fixture >/dev/null
 
+print "\n=== Installer preconditions and cleanup ==="
+linux_uname_bin="$case_dir/linux-uname-bin"
+make_test_uname "$linux_uname_bin" Linux arm64
+linux_home="$case_dir/linux-home"
+linux_error="$case_dir/linux-error"
+mkdir -p -- "$linux_home"
+env \
+  PATH="$linux_uname_bin:$PATH" \
+  HOME="$linux_home" \
+  SHELL=/bin/zsh \
+  POWERLENS_SHELL_MODE=zsh \
+  POWERLENS_ZSHRC="$linux_home/.zshrc" \
+  POWERLENS_REPO_URL="$origin" \
+  POWERLENS_INSTALL_DIR="$linux_home/install" \
+  zsh "$PROJECT_ROOT/install.sh" 2>"$linux_error"
+linux_status=$?
+
+assert_true "non-macOS install exits non-zero" '(( linux_status != 0 ))'
+assert_contains "$linux_error" "macOS"
+assert_absent "$linux_home/install"
+
+invalid_mode_home="$case_dir/invalid-mode-home"
+invalid_mode_error="$case_dir/invalid-mode-error"
+mkdir -p -- "$invalid_mode_home"
+env \
+  HOME="$invalid_mode_home" \
+  SHELL=/bin/zsh \
+  POWERLENS_SHELL_MODE=fish \
+  POWERLENS_ZSHRC="$invalid_mode_home/.zshrc" \
+  POWERLENS_REPO_URL="$origin" \
+  POWERLENS_INSTALL_DIR="$invalid_mode_home/install" \
+  zsh "$PROJECT_ROOT/install.sh" 2>"$invalid_mode_error"
+invalid_mode_status=$?
+
+assert_true "invalid shell mode exits non-zero" '(( invalid_mode_status != 0 ))'
+assert_contains "$invalid_mode_error" "POWERLENS_SHELL_MODE must be omz or zsh"
+assert_absent "$invalid_mode_home/install"
+
+ambiguous_mode_home="$case_dir/ambiguous-mode-home"
+ambiguous_mode_error="$case_dir/ambiguous-mode-error"
+mkdir -p -- "$ambiguous_mode_home"
+env -u POWERLENS_SHELL_MODE -u ZSH -u ZSH_CUSTOM \
+  HOME="$ambiguous_mode_home" \
+  SHELL=/bin/bash \
+  POWERLENS_ZSHRC="$ambiguous_mode_home/.zshrc" \
+  POWERLENS_REPO_URL="$origin" \
+  POWERLENS_INSTALL_DIR="$ambiguous_mode_home/install" \
+  zsh "$PROJECT_ROOT/install.sh" </dev/null 2>"$ambiguous_mode_error"
+ambiguous_mode_status=$?
+
+assert_true "non-interactive ambiguous shell exits non-zero" \
+  '(( ambiguous_mode_status != 0 ))'
+assert_contains "$ambiguous_mode_error" \
+  "set POWERLENS_SHELL_MODE=omz or POWERLENS_SHELL_MODE=zsh"
+assert_absent "$ambiguous_mode_home/install"
+
+missing_parent_home="$case_dir/missing-parent-home"
+missing_parent_zshrc="$missing_parent_home/config/.zshrc"
+missing_parent_error="$case_dir/missing-parent-error"
+mkdir -p -- "$missing_parent_home"
+env \
+  HOME="$missing_parent_home" \
+  SHELL=/bin/zsh \
+  POWERLENS_SHELL_MODE=zsh \
+  POWERLENS_ZSHRC="$missing_parent_zshrc" \
+  POWERLENS_REPO_URL="$origin" \
+  POWERLENS_INSTALL_DIR="$missing_parent_home/install" \
+  zsh "$PROJECT_ROOT/install.sh" 2>"$missing_parent_error"
+missing_parent_status=$?
+
+assert_true "missing startup-file parent exits non-zero" \
+  '(( missing_parent_status != 0 ))'
+assert_absent "$missing_parent_home/config"
+assert_absent "$missing_parent_home/install"
+
+zdotdir_home="$case_dir/zdotdir-home"
+zdotdir="$case_dir/zdotdir"
+zdotdir_install="$zdotdir_home/install"
+mkdir -p -- "$zdotdir_home" "$zdotdir"
+env \
+  HOME="$zdotdir_home" \
+  ZDOTDIR="$zdotdir" \
+  SHELL=/bin/zsh \
+  POWERLENS_SHELL_MODE=zsh \
+  POWERLENS_REPO_URL="$origin" \
+  POWERLENS_INSTALL_DIR="$zdotdir_install" \
+  zsh "$PROJECT_ROOT/install.sh"
+zdotdir_status=$?
+
+assert_eq "ZDOTDIR startup file install exits zero" "$zdotdir_status" "0"
+assert_contains "$zdotdir/.zshrc" \
+  "source \"$zdotdir_install/powerlens.plugin.zsh\""
+assert_absent "$zdotdir_home/.zshrc"
+
+opposite_source="$case_dir/opposite-source"
+opposite_origin="$case_dir/opposite-origin.git"
+git clone --quiet -- "$origin" "$opposite_source"
+git -C "$opposite_source" rm -f -- bin/powerlens-fetch-arm64 >/dev/null
+git -C "$opposite_source" commit -m missing-arm64 >/dev/null
+git clone --quiet --bare "$opposite_source" "$opposite_origin"
+architecture_uname_bin="$case_dir/architecture-uname-bin"
+make_test_uname "$architecture_uname_bin" Darwin arm64
+architecture_home="$case_dir/architecture-home"
+architecture_parent="$architecture_home/installs"
+architecture_error="$case_dir/architecture-error"
+mkdir -p -- "$architecture_parent"
+architecture_before=$(directory_snapshot "$architecture_parent")
+env \
+  PATH="$architecture_uname_bin:$PATH" \
+  HOME="$architecture_home" \
+  SHELL=/bin/zsh \
+  POWERLENS_SHELL_MODE=zsh \
+  POWERLENS_ZSHRC="$architecture_home/.zshrc" \
+  POWERLENS_REPO_URL="$opposite_origin" \
+  POWERLENS_INSTALL_DIR="$architecture_parent/powerlens" \
+  zsh "$PROJECT_ROOT/install.sh" 2>"$architecture_error"
+architecture_status=$?
+
+assert_true "missing native-architecture binary exits non-zero" \
+  '(( architecture_status != 0 ))'
+assert_contains "$architecture_error" "missing executable bin/powerlens-fetch-arm64"
+assert_eq "architecture validation leaves target parent unchanged" \
+  "$(directory_snapshot "$architecture_parent")" "$architecture_before"
+assert_eq "architecture validation leaves no install temporary directory" \
+  "$(count_install_temps "$architecture_parent")" "0"
+
+clone_failure_home="$case_dir/clone-failure-home"
+clone_failure_parent="$clone_failure_home/installs"
+clone_failure_error="$case_dir/clone-failure-error"
+mkdir -p -- "$clone_failure_parent"
+clone_failure_before=$(directory_snapshot "$clone_failure_parent")
+env \
+  HOME="$clone_failure_home" \
+  SHELL=/bin/zsh \
+  POWERLENS_SHELL_MODE=zsh \
+  POWERLENS_ZSHRC="$clone_failure_home/.zshrc" \
+  POWERLENS_REPO_URL="$case_dir/no-such-origin.git" \
+  POWERLENS_INSTALL_DIR="$clone_failure_parent/powerlens" \
+  zsh "$PROJECT_ROOT/install.sh" 2>"$clone_failure_error"
+clone_failure_status=$?
+
+assert_true "clone failure exits non-zero" '(( clone_failure_status != 0 ))'
+assert_absent "$clone_failure_parent/powerlens"
+assert_eq "clone failure leaves target parent unchanged" \
+  "$(directory_snapshot "$clone_failure_parent")" "$clone_failure_before"
+assert_eq "clone failure leaves no install temporary directory" \
+  "$(count_install_temps "$clone_failure_parent")" "0"
+
+manual_source_home="$case_dir/manual-source-home"
+manual_source_install="$manual_source_home/install"
+manual_source_zshrc="$manual_source_home/.zshrc"
+mkdir -p -- "$manual_source_home"
+print -r -- "source \"$manual_source_install/powerlens.plugin.zsh\"" > "$manual_source_zshrc"
+env \
+  HOME="$manual_source_home" \
+  SHELL=/bin/zsh \
+  POWERLENS_SHELL_MODE=zsh \
+  POWERLENS_ZSHRC="$manual_source_zshrc" \
+  POWERLENS_REPO_URL="$origin" \
+  POWERLENS_INSTALL_DIR="$manual_source_install" \
+  zsh "$PROJECT_ROOT/install.sh"
+manual_source_status=$?
+
+assert_eq "manual source install exits zero" "$manual_source_status" "0"
+assert_eq "equivalent manual source remains single" \
+  "$(count_fixed "$manual_source_zshrc" "$manual_source_install/powerlens.plugin.zsh")" "1"
+
 print "\n=== Plain zsh installation ==="
+mkdir -p -- "$case_dir/home"
 env \
   HOME="$case_dir/home" \
   SHELL=/bin/zsh \
@@ -249,6 +456,7 @@ assert_contains "$diverged_error" "cannot fast-forward"
 print "\n=== Installation path with spaces ==="
 space_home="$case_dir/home with spaces"
 space_install_dir="$case_dir/install with spaces"
+mkdir -p -- "$space_home"
 env \
   HOME="$space_home" \
   SHELL=/bin/zsh \
