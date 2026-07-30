@@ -115,6 +115,21 @@ make_test_uname() {
     chmod +x "$bin_dir/uname"
 }
 
+run_without_controlling_tty() {
+    /usr/bin/python3 -c '
+import os
+import sys
+
+child = os.fork()
+if child:
+    _, status = os.waitpid(child, 0)
+    os._exit(os.waitstatus_to_exitcode(status))
+
+os.setsid()
+os.execvp(sys.argv[1], sys.argv[1:])
+' "$@"
+}
+
 run_installer() {
     local home_dir=$1 install_dir=$2 repo_url=$3 error_file=$4
 
@@ -184,10 +199,33 @@ assert_true "invalid shell mode exits non-zero" '(( invalid_mode_status != 0 ))'
 assert_contains "$invalid_mode_error" "POWERLENS_SHELL_MODE must be omz or zsh"
 assert_absent "$invalid_mode_home/install"
 
+non_regular_home="$case_dir/non-regular-home"
+non_regular_zshrc="$non_regular_home/.zshrc"
+non_regular_error="$case_dir/non-regular-error"
+mkdir -p -- "$non_regular_zshrc"
+env \
+  HOME="$non_regular_home" \
+  SHELL=/bin/zsh \
+  POWERLENS_SHELL_MODE=zsh \
+  POWERLENS_ZSHRC="$non_regular_zshrc" \
+  POWERLENS_REPO_URL="$origin" \
+  POWERLENS_INSTALL_DIR="$non_regular_home/install" \
+  zsh "$PROJECT_ROOT/install.sh" 2>"$non_regular_error"
+non_regular_status=$?
+
+assert_true "non-regular startup path exits non-zero" \
+  '(( non_regular_status != 0 ))'
+assert_contains "$non_regular_error" "startup file must be a writable regular file"
+assert_absent "$non_regular_home/install"
+
 ambiguous_mode_home="$case_dir/ambiguous-mode-home"
 ambiguous_mode_error="$case_dir/ambiguous-mode-error"
 mkdir -p -- "$ambiguous_mode_home"
-env -u POWERLENS_SHELL_MODE -u ZSH -u ZSH_CUSTOM \
+no_tty_probe=$(run_without_controlling_tty zsh -fc \
+  '[[ -r /dev/tty && -w /dev/tty ]] && print attached || print detached')
+assert_eq "non-interactive ambiguity case has no controlling TTY" \
+  "$no_tty_probe" "detached"
+run_without_controlling_tty env -u POWERLENS_SHELL_MODE -u ZSH -u ZSH_CUSTOM \
   HOME="$ambiguous_mode_home" \
   SHELL=/bin/bash \
   POWERLENS_ZSHRC="$ambiguous_mode_home/.zshrc" \

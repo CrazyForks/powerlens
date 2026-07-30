@@ -43,8 +43,8 @@ _powerlens_check_preconditions() {
     done
 
     if [[ -e "$zshrc" ]]; then
-        [[ -w "$zshrc" ]] || {
-            _powerlens_die "startup file is not writable: $zshrc"
+        [[ -f "$zshrc" && -w "$zshrc" ]] || {
+            _powerlens_die "startup file must be a writable regular file: $zshrc"
             return 1
         }
     else
