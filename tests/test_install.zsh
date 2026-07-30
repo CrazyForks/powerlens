@@ -27,6 +27,28 @@ assert_file() {
     fi
 }
 
+assert_dir() {
+    local directory_path=$1
+    if [[ -d "$directory_path" ]]; then
+        (( ++PASS ))
+        print "  PASS: directory exists: $directory_path"
+    else
+        (( ++FAIL ))
+        print -u2 "  FAIL: expected directory: $directory_path"
+    fi
+}
+
+assert_true() {
+    local desc=$1 condition=$2
+    if eval "$condition"; then
+        (( ++PASS ))
+        print "  PASS: $desc"
+    else
+        (( ++FAIL ))
+        print -u2 "  FAIL: $desc"
+    fi
+}
+
 assert_contains() {
     local file_path=$1 expected=$2
     if grep -F -q -- "$expected" "$file_path" 2>/dev/null; then
@@ -48,6 +70,11 @@ count_backups() {
     local -a backups
     backups=("$home_dir"/.zshrc.powerlens-backup-*(N))
     print ${#backups}
+}
+
+line_number() {
+    local file_path=$1 text=$2
+    grep -n -F -- "$text" "$file_path" 2>/dev/null | head -n 1 | cut -d: -f1
 }
 
 PROJECT_ROOT=${0:A:h:h}
@@ -124,6 +151,103 @@ zsh -fc 'source "$1"; [[ "$POWERLENS_FIXTURE_LOADED" == 1 ]]' \
   powerlens-test "$space_home/.zshrc"
 space_source_status=$?
 assert_eq "space path startup file sources plugin" "$space_source_status" "0"
+
+print "\n=== Oh My Zsh installation ==="
+omz_home="$case_dir/omz-home"
+omz_zshrc="$omz_home/.zshrc"
+mkdir -p "$omz_home"
+print 'export ZSH="$HOME/.oh-my-zsh"' > "$omz_zshrc"
+print 'plugins=(' >> "$omz_zshrc"
+print '  git' >> "$omz_zshrc"
+print ')' >> "$omz_zshrc"
+print 'source "$ZSH/oh-my-zsh.sh"' >> "$omz_zshrc"
+
+env \
+  HOME="$omz_home" \
+  SHELL=/bin/zsh \
+  ZSH_CUSTOM="$case_dir/custom" \
+  POWERLENS_ZSHRC="$omz_zshrc" \
+  POWERLENS_REPO_URL="$case_dir/origin" \
+  zsh "$PROJECT_ROOT/install.sh"
+omz_install_status=$?
+
+assert_eq "Oh My Zsh install exits zero" "$omz_install_status" "0"
+assert_dir "$case_dir/custom/plugins/powerlens/.git"
+loader_line=$(line_number "$omz_zshrc" 'source "$ZSH/oh-my-zsh.sh"')
+powerlens_line=$(line_number "$omz_zshrc" 'plugins+=(powerlens)')
+assert_true "PowerLens is configured before Oh My Zsh loads" \
+  '(( powerlens_line < loader_line ))'
+
+print "\n=== Existing Oh My Zsh plugin assignment ==="
+existing_assignment_home="$case_dir/existing-assignment-home"
+existing_assignment_zshrc="$existing_assignment_home/.zshrc"
+mkdir -p "$existing_assignment_home"
+print 'export ZSH="$HOME/.oh-my-zsh"' > "$existing_assignment_zshrc"
+print 'plugins=(git powerlens)' >> "$existing_assignment_zshrc"
+print 'source "$ZSH/oh-my-zsh.sh"' >> "$existing_assignment_zshrc"
+existing_assignment_before=$(<"$existing_assignment_zshrc")
+
+env \
+  HOME="$existing_assignment_home" \
+  SHELL=/bin/zsh \
+  ZSH_CUSTOM="$case_dir/existing-assignment-custom" \
+  POWERLENS_ZSHRC="$existing_assignment_zshrc" \
+  POWERLENS_REPO_URL="$case_dir/origin" \
+  zsh "$PROJECT_ROOT/install.sh"
+existing_assignment_status=$?
+
+assert_eq "existing plugins assignment exits zero" "$existing_assignment_status" "0"
+assert_eq "existing plugins assignment remains unchanged" \
+  "$(<"$existing_assignment_zshrc")" "$existing_assignment_before"
+assert_eq "existing plugins assignment creates no backup" \
+  "$(count_backups "$existing_assignment_home")" "0"
+
+print "\n=== Existing Oh My Zsh append assignment ==="
+existing_append_home="$case_dir/existing-append-home"
+existing_append_zshrc="$existing_append_home/.zshrc"
+mkdir -p "$existing_append_home"
+print 'export ZSH="$HOME/.oh-my-zsh"' > "$existing_append_zshrc"
+print 'plugins+=(powerlens)' >> "$existing_append_zshrc"
+print 'source "$ZSH/oh-my-zsh.sh"' >> "$existing_append_zshrc"
+existing_append_before=$(<"$existing_append_zshrc")
+
+env \
+  HOME="$existing_append_home" \
+  SHELL=/bin/zsh \
+  ZSH_CUSTOM="$case_dir/existing-append-custom" \
+  POWERLENS_ZSHRC="$existing_append_zshrc" \
+  POWERLENS_REPO_URL="$case_dir/origin" \
+  zsh "$PROJECT_ROOT/install.sh"
+existing_append_status=$?
+
+assert_eq "existing plugins append exits zero" "$existing_append_status" "0"
+assert_eq "existing plugins append remains unchanged" \
+  "$(<"$existing_append_zshrc")" "$existing_append_before"
+assert_eq "existing plugins append creates no backup" \
+  "$(count_backups "$existing_append_home")" "0"
+
+print "\n=== Ambiguous Oh My Zsh loaders ==="
+ambiguous_home="$case_dir/ambiguous-home"
+ambiguous_zshrc="$ambiguous_home/.zshrc"
+mkdir -p "$ambiguous_home"
+print 'plugins=(git)' > "$ambiguous_zshrc"
+print 'source "$ZSH/oh-my-zsh.sh"' >> "$ambiguous_zshrc"
+print 'source "$ZSH/oh-my-zsh.sh"' >> "$ambiguous_zshrc"
+ambiguous_before=$(<"$ambiguous_zshrc")
+
+env \
+  HOME="$ambiguous_home" \
+  SHELL=/bin/zsh \
+  ZSH_CUSTOM="$case_dir/ambiguous-custom" \
+  POWERLENS_ZSHRC="$ambiguous_zshrc" \
+  POWERLENS_REPO_URL="$case_dir/origin" \
+  zsh "$PROJECT_ROOT/install.sh"
+ambiguous_status=$?
+
+assert_true "ambiguous Oh My Zsh loaders exit non-zero" \
+  '(( ambiguous_status != 0 ))'
+assert_eq "ambiguous Oh My Zsh startup file remains unchanged" \
+  "$(<"$ambiguous_zshrc")" "$ambiguous_before"
 
 print "\nResults: ${PASS} passed, ${FAIL} failed"
 (( FAIL == 0 ))
