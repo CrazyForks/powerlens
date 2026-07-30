@@ -5,6 +5,7 @@ typeset -gr POWERLENS_DEFAULT_REPO_URL="https://github.com/luyangkk/powerlens.gi
 typeset -gr POWERLENS_MARKER_START="# >>> PowerLens installer >>>"
 typeset -gr POWERLENS_MARKER_END="# <<< PowerLens installer <<<"
 typeset -g _powerlens_install_temporary_dir=""
+typeset -g _powerlens_install_lock_dir=""
 typeset -g _powerlens_zshrc_temporary_file=""
 
 _powerlens_die() {
@@ -19,6 +20,10 @@ _powerlens_cleanup_temporary_files() {
         rm -rf -- "$_powerlens_install_temporary_dir"
     fi
     _powerlens_install_temporary_dir=""
+    if [[ -n "$_powerlens_install_lock_dir" && -d "$_powerlens_install_lock_dir" ]]; then
+        rmdir -- "$_powerlens_install_lock_dir" 2>/dev/null || true
+    fi
+    _powerlens_install_lock_dir=""
     if [[ -n "$_powerlens_zshrc_temporary_file" && -e "$_powerlens_zshrc_temporary_file" ]]; then
         rm -f -- "$_powerlens_zshrc_temporary_file"
     fi
@@ -55,15 +60,15 @@ _powerlens_check_preconditions() {
         return 1
     fi
 
+    parent_dir=${zshrc:h}
+    [[ -d "$parent_dir" && -w "$parent_dir" ]] || {
+        _powerlens_die "startup file parent must exist and be writable: $parent_dir"
+        return 1
+    }
+
     if [[ -e "$zshrc" ]]; then
         [[ -f "$zshrc" && -w "$zshrc" ]] || {
             _powerlens_die "startup file must be a writable regular file: $zshrc"
-            return 1
-        }
-    else
-        parent_dir=${zshrc:h}
-        [[ -d "$parent_dir" && -w "$parent_dir" ]] || {
-            _powerlens_die "startup file parent must exist and be writable: $parent_dir"
             return 1
         }
     fi
@@ -109,7 +114,8 @@ _powerlens_validate_existing_repo() {
         return 1
     }
 
-    status_output=$(git -C "$install_dir" status --porcelain) || {
+    status_output=$(git -C "$install_dir" status --porcelain \
+      --untracked-files=all --ignored=matching) || {
         _powerlens_die "not a PowerLens Git repository: $install_dir; move it aside or set POWERLENS_INSTALL_DIR to another path"
         return 1
     }
@@ -138,6 +144,27 @@ _powerlens_validate_existing_repo() {
     _powerlens_validate_install "$install_dir"
 }
 
+_powerlens_acquire_install_lock() {
+    local install_dir=$1 lock_dir="${install_dir}.powerlens-install-lock"
+
+    if ! mkdir -- "$lock_dir" 2>/dev/null; then
+        _powerlens_die "another installer is publishing to $install_dir; retry after it finishes"
+        return 1
+    fi
+    _powerlens_install_lock_dir=$lock_dir
+}
+
+_powerlens_release_install_lock() {
+    local lock_dir=$_powerlens_install_lock_dir
+
+    [[ -n "$lock_dir" ]] || return
+    if ! rmdir -- "$lock_dir"; then
+        _powerlens_die "could not release installer lock: $lock_dir"
+        return 1
+    fi
+    _powerlens_install_lock_dir=""
+}
+
 _powerlens_install_or_update() {
     local install_dir=$1 repo_url=$2
     local parent_dir=${install_dir:h} temporary_dir
@@ -161,35 +188,55 @@ _powerlens_install_or_update() {
         return 1
     fi
 
+    if ! _powerlens_acquire_install_lock "$install_dir"; then
+        _powerlens_cleanup_temporary_files
+        return 1
+    fi
+    if [[ -e "$install_dir" || -L "$install_dir" ]]; then
+        _powerlens_cleanup_temporary_files
+        _powerlens_die "another installer completed $install_dir; retry to update it"
+        return 1
+    fi
+
     if ! mv -- "$temporary_dir" "$install_dir"; then
         _powerlens_cleanup_temporary_files
         return 1
     fi
     _powerlens_install_temporary_dir=""
+    if ! _powerlens_release_install_lock; then
+        _powerlens_cleanup_temporary_files
+        return 1
+    fi
+}
+
+_powerlens_is_omz_loader_line() {
+    local line=$1 source_path
+    local -a words
+
+    words=(${(z)line})
+    (( ${#words} >= 2 )) || return 1
+    [[ "$words[1]" == source || "$words[1]" == "." ]] || return 1
+    source_path=${(Q)words[2]}
+    [[ "${source_path:t}" == "oh-my-zsh.sh" ]]
 }
 
 _powerlens_omz_loader_count() {
-    local zshrc=$1
+    local zshrc=$1 line
+    local loader_count=0
 
     [[ -f "$zshrc" ]] || {
         print 0
         return
     }
 
-    awk '
-        /^[[:space:]]*(source|\.)[[:space:]]/ {
-            line = $0
-            sub(/#.*/, "", line)
-            if (index(line, "oh-my-zsh.sh")) {
-                count++
-            }
-        }
-        END { print count + 0 }
-    ' "$zshrc"
+    while IFS= read -r line || [[ -n "$line" ]]; do
+        _powerlens_is_omz_loader_line "$line" && (( ++loader_count ))
+    done < "$zshrc"
+    print "$loader_count"
 }
 
 _powerlens_detect_shell_mode() {
-    local zshrc=$1
+    local zshrc=$1 loader_count
 
     case "${POWERLENS_SHELL_MODE:-}" in
         omz|zsh) print -r -- "$POWERLENS_SHELL_MODE"; return 0 ;;
@@ -197,8 +244,9 @@ _powerlens_detect_shell_mode() {
         *) _powerlens_die "POWERLENS_SHELL_MODE must be omz or zsh"; return 1 ;;
     esac
 
+    loader_count=$(_powerlens_omz_loader_count "$zshrc")
     if [[ -f "${ZSH:-}/oh-my-zsh.sh" || -f "$HOME/.oh-my-zsh/oh-my-zsh.sh" ]] || \
-        [[ "$(_powerlens_omz_loader_count "$zshrc")" == 1 ]]; then
+        (( loader_count > 0 )); then
         print -r -- omz
     elif [[ "${SHELL:-}" == */zsh || "${SHELL:-}" == zsh ]]; then
         print -r -- zsh
@@ -278,10 +326,31 @@ _powerlens_plugins_contain_powerlens() {
     ' "$zshrc"
 }
 
+_powerlens_normalize_plain_source_path() {
+    local source_path=$1
+
+    case "$source_path" in
+        /*)
+            print -r -- "$source_path"
+            ;;
+        '$HOME/.local/share/powerlens/powerlens.plugin.zsh'|'${HOME}/.local/share/powerlens/powerlens.plugin.zsh'|'~/.local/share/powerlens/powerlens.plugin.zsh')
+            print -r -- "$HOME/.local/share/powerlens/powerlens.plugin.zsh"
+            ;;
+        '${XDG_DATA_HOME:-$HOME/.local/share}/powerlens/powerlens.plugin.zsh')
+            print -r -- "${XDG_DATA_HOME:-$HOME/.local/share}/powerlens/powerlens.plugin.zsh"
+            ;;
+        '$XDG_DATA_HOME/powerlens/powerlens.plugin.zsh'|'${XDG_DATA_HOME}/powerlens/powerlens.plugin.zsh')
+            [[ -n "${XDG_DATA_HOME:-}" ]] || return 1
+            print -r -- "$XDG_DATA_HOME/powerlens/powerlens.plugin.zsh"
+            ;;
+        *)
+            return 1
+            ;;
+    esac
+}
+
 _powerlens_plain_source_present() {
-    local zshrc=$1 plugin_path=$2 line source_path
-    local readme_source='${XDG_DATA_HOME:-$HOME/.local/share}/powerlens/powerlens.plugin.zsh'
-    local readme_path="${XDG_DATA_HOME:-$HOME/.local/share}/powerlens/powerlens.plugin.zsh"
+    local zshrc=$1 plugin_path=$2 line source_path normalized_source_path
     local -a words
 
     while IFS= read -r line || [[ -n "$line" ]]; do
@@ -289,8 +358,9 @@ _powerlens_plain_source_present() {
         (( ${#words} >= 2 )) || continue
         [[ "$words[1]" == source || "$words[1]" == "." ]] || continue
         source_path=${(Q)words[2]}
-        [[ "$source_path" == "$readme_source" ]] && source_path=$readme_path
-        [[ "$source_path" == "$plugin_path" ]] && return 0
+        normalized_source_path=$(_powerlens_normalize_plain_source_path \
+          "$source_path") || continue
+        [[ "$normalized_source_path" == "$plugin_path" ]] && return 0
     done < "$zshrc"
 
     return 1
@@ -332,33 +402,30 @@ _powerlens_configure_plain_zsh() {
 
 _powerlens_configure_omz() {
     local zshrc=$1 install_dir=$2
-    local loader_count temporary_zshrc backup_path
+    local loader_count temporary_zshrc backup_path line
 
+    _powerlens_plugins_contain_powerlens "$zshrc" && return
     loader_count=$(_powerlens_omz_loader_count "$zshrc")
     if [[ "$loader_count" != 1 ]]; then
         _powerlens_die "expected exactly one active Oh My Zsh loader in $zshrc; add plugins+=(powerlens) manually before the loader"
         return 1
     fi
 
-    _powerlens_plugins_contain_powerlens "$zshrc" && return
-
     backup_path="${zshrc}.powerlens-backup-$(date +%Y%m%d-%H%M%S)"
     cp -- "$zshrc" "$backup_path"
 
     temporary_zshrc=$(mktemp "${zshrc}.powerlens-tmp-XXXXXX") || return 1
     _powerlens_zshrc_temporary_file=$temporary_zshrc
-    if ! awk -v marker_start="$POWERLENS_MARKER_START" -v marker_end="$POWERLENS_MARKER_END" '
-        /^[[:space:]]*(source|\.)[[:space:]]/ {
-            line = $0
-            sub(/#.*/, "", line)
-            if (index(line, "oh-my-zsh.sh")) {
-                print marker_start
+    if ! {
+        while IFS= read -r line || [[ -n "$line" ]]; do
+            if _powerlens_is_omz_loader_line "$line"; then
+                print -- "$POWERLENS_MARKER_START"
                 print "plugins+=(powerlens)"
-                print marker_end
-            }
-        }
-        { print }
-    ' "$zshrc" > "$temporary_zshrc"; then
+                print -- "$POWERLENS_MARKER_END"
+            fi
+            print -r -- "$line"
+        done < "$zshrc"
+    } > "$temporary_zshrc"; then
         _powerlens_cleanup_temporary_files
         return 1
     fi
