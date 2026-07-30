@@ -9,7 +9,7 @@
 
 ![PowerLens Demo](assets/demo.svg)
 
-PowerLens is a lightweight Oh-My-Zsh plugin that embeds live system metrics into `RPROMPT`. A single background daemon collects all data every 2 seconds; the prompt reads a cached JSON file on each `precmd` — adding less than 5ms to prompt render time regardless of how many terminal windows you have open.
+PowerLens is a lightweight zsh prompt plugin that embeds live system metrics into `RPROMPT`. It works with Oh My Zsh or plain zsh. A single background daemon collects all data every 2 seconds; the prompt reads a cached JSON file on each `precmd` — adding less than 5ms to prompt render time regardless of how many terminal windows you have open.
 
 ---
 
@@ -38,7 +38,59 @@ Each metric is colored independently. Thresholds are fully configurable.
 
 ## Installation
 
-### Oh-My-Zsh
+Install or update with one command:
+
+```zsh
+curl -fsSL https://raw.githubusercontent.com/luyangkk/powerlens/main/install.sh | zsh
+```
+
+The first run installs PowerLens; later runs update the existing installation
+from the repository's `main` branch. The installer detects Oh My Zsh or plain
+zsh, configures `~/.zshrc`, and avoids adding duplicate PowerLens entries. It
+requires macOS, `git`, `zsh`, and `curl`.
+
+Start a fresh zsh session when it finishes:
+
+```zsh
+exec zsh
+```
+
+### Choose a shell mode explicitly
+
+If automatic detection is not appropriate (for example in a non-interactive
+setup), download the installer, review it, and choose the shell mode:
+
+```zsh
+curl -fsSL https://raw.githubusercontent.com/luyangkk/powerlens/main/install.sh \
+  -o /tmp/powerlens-install.sh
+less /tmp/powerlens-install.sh
+
+POWERLENS_SHELL_MODE=omz \
+  zsh /tmp/powerlens-install.sh
+```
+
+Use `zsh` instead of `omz` for a plain-zsh setup:
+
+```zsh
+POWERLENS_SHELL_MODE=zsh \
+  zsh /tmp/powerlens-install.sh
+```
+
+The mode must be either `omz` or `zsh`. The installer can also prompt you to
+choose when it cannot detect the setup.
+
+### Update and security notes
+
+The one-line command downloads and executes the current installer from
+`main`; this is convenient, but `main` can change. Prefer the review-first
+download flow above when you want to inspect exactly what will run, and review
+the repository's changes before trusting an update.
+
+Updates require a clean PowerLens installation repository. If the installer
+reports local changes, commit, revert, or move those changes yourself before
+running it again. Do not use a destructive reset just to update.
+
+### Manual Oh My Zsh fallback
 
 ```bash
 git clone https://github.com/luyangkk/powerlens.git \
@@ -51,10 +103,29 @@ Add `powerlens` to your plugins list in `~/.zshrc`:
 plugins=(... powerlens)
 ```
 
-Reload your shell:
+Start a fresh zsh session:
 
-```bash
-source ~/.zshrc
+```zsh
+exec zsh
+```
+
+### Manual plain-zsh fallback
+
+```zsh
+git clone https://github.com/luyangkk/powerlens.git \
+  "${XDG_DATA_HOME:-$HOME/.local/share}/powerlens"
+```
+
+Add this line to `~/.zshrc`:
+
+```zsh
+source "${XDG_DATA_HOME:-$HOME/.local/share}/powerlens/powerlens.plugin.zsh"
+```
+
+Then start a fresh zsh session:
+
+```zsh
+exec zsh
 ```
 
 ### Build from Source
@@ -62,7 +133,7 @@ source ~/.zshrc
 If macOS blocks the pre-compiled binary (Gatekeeper), build it yourself — requires Go 1.21+:
 
 ```bash
-cd ~/.oh-my-zsh/custom/plugins/powerlens
+cd ~/.oh-my-zsh/custom/plugins/powerlens  # or ~/.local/share/powerlens
 make install
 ```
 
@@ -223,7 +294,8 @@ POWERLENS_ALERT_FAN=4000      # RPM
 
 - macOS 12 (Monterey) or later
 - Zsh 5.8+
-- Oh-My-Zsh
+- Git and curl (for the installer)
+- Oh My Zsh or plain zsh
 
 ---
 
