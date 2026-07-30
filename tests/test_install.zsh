@@ -230,6 +230,60 @@ assert_true "non-regular startup path exits non-zero" \
 assert_contains "$non_regular_error" "startup file must be a writable regular file"
 assert_absent "$non_regular_home/install"
 
+plain_symlink_home="$case_dir/plain-symlink-home"
+plain_symlink_target="$case_dir/plain-symlink-target"
+plain_symlink_zshrc="$plain_symlink_home/.zshrc"
+plain_symlink_error="$case_dir/plain-symlink-error"
+mkdir -p -- "$plain_symlink_home"
+print 'plain symlink sentinel' > "$plain_symlink_target"
+ln -s -- "$plain_symlink_target" "$plain_symlink_zshrc"
+env \
+  HOME="$plain_symlink_home" \
+  SHELL=/bin/zsh \
+  POWERLENS_SHELL_MODE=zsh \
+  POWERLENS_ZSHRC="$plain_symlink_zshrc" \
+  POWERLENS_REPO_URL="$origin" \
+  POWERLENS_INSTALL_DIR="$plain_symlink_home/install" \
+  zsh "$PROJECT_ROOT/install.sh" 2>"$plain_symlink_error"
+plain_symlink_status=$?
+
+assert_true "plain-zsh startup symlink exits non-zero" \
+  '(( plain_symlink_status != 0 ))'
+assert_true "plain-zsh startup symlink remains a link" \
+  '[[ -L "$plain_symlink_zshrc" ]]'
+assert_eq "plain-zsh startup symlink target remains unchanged" \
+  "$(<"$plain_symlink_target")" "plain symlink sentinel"
+assert_absent "$plain_symlink_home/install"
+assert_contains "$plain_symlink_error" "configure its target manually"
+
+omz_symlink_home="$case_dir/omz-symlink-home"
+omz_symlink_target="$case_dir/omz-symlink-target"
+omz_symlink_zshrc="$omz_symlink_home/.zshrc"
+omz_symlink_error="$case_dir/omz-symlink-error"
+mkdir -p -- "$omz_symlink_home"
+print 'plugins=(git)' > "$omz_symlink_target"
+print 'source "$ZSH/oh-my-zsh.sh"' >> "$omz_symlink_target"
+omz_symlink_before=$(<"$omz_symlink_target")
+ln -s -- "$omz_symlink_target" "$omz_symlink_zshrc"
+env \
+  HOME="$omz_symlink_home" \
+  SHELL=/bin/zsh \
+  POWERLENS_SHELL_MODE=omz \
+  POWERLENS_ZSHRC="$omz_symlink_zshrc" \
+  POWERLENS_REPO_URL="$origin" \
+  POWERLENS_INSTALL_DIR="$omz_symlink_home/install" \
+  zsh "$PROJECT_ROOT/install.sh" 2>"$omz_symlink_error"
+omz_symlink_status=$?
+
+assert_true "Oh My Zsh startup symlink exits non-zero" \
+  '(( omz_symlink_status != 0 ))'
+assert_true "Oh My Zsh startup symlink remains a link" \
+  '[[ -L "$omz_symlink_zshrc" ]]'
+assert_eq "Oh My Zsh startup symlink target remains unchanged" \
+  "$(<"$omz_symlink_target")" "$omz_symlink_before"
+assert_absent "$omz_symlink_home/install"
+assert_contains "$omz_symlink_error" "configure its target manually"
+
 ambiguous_mode_home="$case_dir/ambiguous-mode-home"
 ambiguous_mode_error="$case_dir/ambiguous-mode-error"
 mkdir -p -- "$ambiguous_mode_home"
@@ -371,6 +425,43 @@ assert_eq "clone failure leaves target parent unchanged" \
 assert_eq "clone failure leaves no install temporary directory" \
   "$(count_install_temps "$clone_failure_parent")" "0"
 
+term_home="$case_dir/term-home"
+term_parent="$term_home/installs"
+term_install="$term_parent/powerlens"
+term_bin="$case_dir/term-bin"
+term_marker="$case_dir/term-marker"
+term_error="$case_dir/term-error"
+mkdir -p -- "$term_parent" "$term_bin"
+{
+    print -r -- '#!/usr/bin/env zsh'
+    print -r -- 'if [[ "$1" == clone ]]; then'
+    print -r -- '    command /usr/bin/git "$@"'
+    print -r -- '    clone_status=$?'
+    print -r -- '    kill -TERM "$PPID"'
+    print -r -- '    exit "$clone_status"'
+    print -r -- 'fi'
+    print -r -- 'exec /usr/bin/git "$@"'
+} > "$term_bin/git"
+chmod +x "$term_bin/git"
+env \
+  PATH="$term_bin:$PATH" \
+  HOME="$term_home" \
+  SHELL=/bin/zsh \
+  POWERLENS_SHELL_MODE=zsh \
+  POWERLENS_ZSHRC="$term_home/.zshrc" \
+  POWERLENS_REPO_URL="$origin" \
+  POWERLENS_INSTALL_DIR="$term_install" \
+  zsh -c 'source "$1"; print -r -- reached > "$2"' \
+  powerlens-term "$PROJECT_ROOT/install.sh" "$term_marker" \
+  >/dev/null 2>"$term_error"
+term_status=$?
+
+assert_eq "TERM exits with the conventional signal status" "$term_status" "143"
+assert_absent "$term_marker"
+assert_absent "$term_install"
+assert_eq "TERM cleans the install temporary directory" \
+  "$(count_install_temps "$term_parent")" "0"
+
 manual_source_home="$case_dir/manual-source-home"
 manual_source_install="$manual_source_home/install"
 manual_source_zshrc="$manual_source_home/.zshrc"
@@ -389,6 +480,31 @@ manual_source_status=$?
 assert_eq "manual source install exits zero" "$manual_source_status" "0"
 assert_eq "equivalent manual source remains single" \
   "$(count_fixed "$manual_source_zshrc" "$manual_source_install/powerlens.plugin.zsh")" "1"
+
+readme_source_home="$case_dir/readme-source-home"
+readme_source_install="$readme_source_home/.local/share/powerlens"
+readme_source_zshrc="$readme_source_home/.zshrc"
+mkdir -p -- "$readme_source_home"
+print -r -- \
+  'source "${XDG_DATA_HOME:-$HOME/.local/share}/powerlens/powerlens.plugin.zsh"' \
+  > "$readme_source_zshrc"
+readme_source_before=$(<"$readme_source_zshrc")
+env -u XDG_DATA_HOME \
+  HOME="$readme_source_home" \
+  SHELL=/bin/zsh \
+  POWERLENS_SHELL_MODE=zsh \
+  POWERLENS_ZSHRC="$readme_source_zshrc" \
+  POWERLENS_REPO_URL="$origin" \
+  POWERLENS_INSTALL_DIR="$readme_source_install" \
+  zsh "$PROJECT_ROOT/install.sh"
+readme_source_status=$?
+
+assert_eq "README manual source install exits zero" \
+  "$readme_source_status" "0"
+assert_eq "README manual source remains unchanged" \
+  "$(<"$readme_source_zshrc")" "$readme_source_before"
+assert_eq "README manual source creates no backup" \
+  "$(count_backups "$readme_source_home")" "0"
 
 comment_source_home="$case_dir/comment-source-home"
 comment_source_install="$comment_source_home/install"

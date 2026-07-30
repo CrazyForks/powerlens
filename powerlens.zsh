@@ -11,6 +11,10 @@ else
     _powerlens_bin="${0:h}/bin/powerlens-fetch-amd64"
 fi
 
+_powerlens_is_ssh() {
+    [[ -n "${SSH_TTY:-}" || -n "${SSH_CONNECTION:-}" || -n "${SSH_CLIENT:-}" ]]
+}
+
 # Degraded RPROMPT — all values shown as --
 _powerlens_degraded() {
     _powerlens_wrap "#444444" "⚡ --W 🔋 --% ⚙ --% 🌡 --° 🧠 --% ↑ -- ↓ --"
@@ -270,6 +274,11 @@ TRAPALRM() {
 
 _powerlens_init() {
     _POWERLENS_DEGRADED=$(_powerlens_degraded)
+    if _powerlens_is_ssh; then
+        RPROMPT="$_POWERLENS_DEGRADED"
+        return
+    fi
+
     _powerlens_start_daemon
     precmd() { _powerlens_update_rprompt }
     zshexit() { (( $+functions[_powerlens_stop_daemon] )) && _powerlens_stop_daemon }

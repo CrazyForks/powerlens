@@ -30,12 +30,25 @@ source "${0:h}/../powerlens.zsh"
 
 print "\n=== SSH guard ==="
 SSH_TTY="/dev/ttys001"
-assert_eq "_powerlens_is_ssh returns true in SSH" "$(_powerlens_is_ssh && echo yes || echo no)" "yes"
+local ssh_cache=$(mktemp -d)
+_POWERLENS_CACHE="$ssh_cache"
+_POWERLENS_PIDFILE="$_POWERLENS_CACHE/daemon.pid"
+_POWERLENS_COUNTER="$_POWERLENS_CACHE/sessions"
+_powerlens_bin=/usr/bin/true
+_powerlens_init
+local ssh_behavior=no
+[[ "$RPROMPT" == "$(_powerlens_degraded)" \
+  && ! -e "$_POWERLENS_PIDFILE" \
+  && ! -e "$_POWERLENS_COUNTER" ]] && ssh_behavior=yes
+assert_eq "SSH init uses degraded prompt without daemon state" \
+  "$ssh_behavior" "yes"
+rm -rf "$ssh_cache"
 unset SSH_TTY
 
 print "\n=== Degraded output ==="
 out=$(_powerlens_degraded)
-assert_eq "degraded contains --W" "${out//[^-]/}" "$(printf '%0.s-' {1..12})"
+assert_eq "degraded covers all seven displayed values" \
+  "${out//[^-]/}" "$(printf '%0.s-' {1..14})"
 
 print "\n=== Daemon singleton ==="
 # Fake binary that ignores all args and sleeps forever

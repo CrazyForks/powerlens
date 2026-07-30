@@ -27,6 +27,14 @@ _powerlens_cleanup_temporary_files() {
     return "$exit_status"
 }
 
+_powerlens_handle_signal() {
+    local exit_status=$1
+
+    trap - EXIT HUP INT TERM
+    _powerlens_cleanup_temporary_files
+    exit "$exit_status"
+}
+
 _powerlens_check_preconditions() {
     local zshrc=$1 parent_dir required_command
 
@@ -41,6 +49,11 @@ _powerlens_check_preconditions() {
             return 1
         }
     done
+
+    if [[ -L "$zshrc" ]]; then
+        _powerlens_die "startup file is a symbolic link: $zshrc; configure its target manually or set POWERLENS_ZSHRC to a writable regular file"
+        return 1
+    fi
 
     if [[ -e "$zshrc" ]]; then
         [[ -f "$zshrc" && -w "$zshrc" ]] || {
@@ -267,6 +280,8 @@ _powerlens_plugins_contain_powerlens() {
 
 _powerlens_plain_source_present() {
     local zshrc=$1 plugin_path=$2 line source_path
+    local readme_source='${XDG_DATA_HOME:-$HOME/.local/share}/powerlens/powerlens.plugin.zsh'
+    local readme_path="${XDG_DATA_HOME:-$HOME/.local/share}/powerlens/powerlens.plugin.zsh"
     local -a words
 
     while IFS= read -r line || [[ -n "$line" ]]; do
@@ -274,6 +289,7 @@ _powerlens_plain_source_present() {
         (( ${#words} >= 2 )) || continue
         [[ "$words[1]" == source || "$words[1]" == "." ]] || continue
         source_path=${(Q)words[2]}
+        [[ "$source_path" == "$readme_source" ]] && source_path=$readme_path
         [[ "$source_path" == "$plugin_path" ]] && return 0
     done < "$zshrc"
 
@@ -389,5 +405,8 @@ _powerlens_main() {
     print -r -- "exec zsh"
 }
 
-trap _powerlens_cleanup_temporary_files EXIT HUP INT TERM
+trap _powerlens_cleanup_temporary_files EXIT
+trap '_powerlens_handle_signal 129' HUP
+trap '_powerlens_handle_signal 130' INT
+trap '_powerlens_handle_signal 143' TERM
 _powerlens_main "$@"
