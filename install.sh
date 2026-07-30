@@ -4,10 +4,56 @@ setopt errexit nounset pipefail
 typeset -gr POWERLENS_DEFAULT_REPO_URL="https://github.com/luyangkk/powerlens.git"
 typeset -gr POWERLENS_MARKER_START="# >>> PowerLens installer >>>"
 typeset -gr POWERLENS_MARKER_END="# <<< PowerLens installer <<<"
+typeset -g _powerlens_install_temporary_dir=""
+typeset -g _powerlens_zshrc_temporary_file=""
 
 _powerlens_die() {
     print -u2 "PowerLens: $1"
     return 1
+}
+
+_powerlens_cleanup_temporary_files() {
+    local exit_status=$?
+
+    if [[ -n "$_powerlens_install_temporary_dir" && -e "$_powerlens_install_temporary_dir" ]]; then
+        rm -rf -- "$_powerlens_install_temporary_dir"
+    fi
+    _powerlens_install_temporary_dir=""
+    if [[ -n "$_powerlens_zshrc_temporary_file" && -e "$_powerlens_zshrc_temporary_file" ]]; then
+        rm -f -- "$_powerlens_zshrc_temporary_file"
+    fi
+    _powerlens_zshrc_temporary_file=""
+
+    return "$exit_status"
+}
+
+_powerlens_check_preconditions() {
+    local zshrc=$1 parent_dir required_command
+
+    [[ "$(uname -s)" == "Darwin" ]] || {
+        _powerlens_die "PowerLens requires macOS"
+        return 1
+    }
+
+    for required_command in git zsh curl; do
+        command -v "$required_command" >/dev/null || {
+            _powerlens_die "required command not found: $required_command"
+            return 1
+        }
+    done
+
+    if [[ -e "$zshrc" ]]; then
+        [[ -w "$zshrc" ]] || {
+            _powerlens_die "startup file is not writable: $zshrc"
+            return 1
+        }
+    else
+        parent_dir=${zshrc:h}
+        [[ -d "$parent_dir" && -w "$parent_dir" ]] || {
+            _powerlens_die "startup file parent must exist and be writable: $parent_dir"
+            return 1
+        }
+    fi
 }
 
 _powerlens_validate_install() {
@@ -81,21 +127,23 @@ _powerlens_install_or_update() {
 
     mkdir -p -- "$parent_dir"
     temporary_dir=$(mktemp -d "$parent_dir/.powerlens-install-XXXXXX") || return 1
+    _powerlens_install_temporary_dir=$temporary_dir
 
     if ! git clone --branch main --single-branch -- "$repo_url" "$temporary_dir"; then
-        rm -rf -- "$temporary_dir"
+        _powerlens_cleanup_temporary_files
         return 1
     fi
 
     if ! _powerlens_validate_install "$temporary_dir"; then
-        rm -rf -- "$temporary_dir"
+        _powerlens_cleanup_temporary_files
         return 1
     fi
 
     if ! mv -- "$temporary_dir" "$install_dir"; then
-        rm -rf -- "$temporary_dir"
+        _powerlens_cleanup_temporary_files
         return 1
     fi
+    _powerlens_install_temporary_dir=""
 }
 
 _powerlens_omz_loader_count() {
@@ -133,9 +181,36 @@ _powerlens_detect_shell_mode() {
     elif [[ "${SHELL:-}" == */zsh || "${SHELL:-}" == zsh ]]; then
         print -r -- zsh
     else
-        _powerlens_die "could not detect zsh or Oh My Zsh"
+        _powerlens_choose_mode_from_tty
+    fi
+}
+
+_powerlens_choose_mode_from_tty() {
+    local choice
+
+    if [[ ! -r /dev/tty || ! -w /dev/tty ]]; then
+        _powerlens_die "could not detect zsh or Oh My Zsh; set POWERLENS_SHELL_MODE=omz or POWERLENS_SHELL_MODE=zsh"
         return 1
     fi
+
+    if ! {
+        print -r -- "PowerLens: unable to detect your shell setup. Choose an installation mode:"
+        print -r -- "  1) Oh My Zsh"
+        print -r -- "  2) plain zsh"
+        print -n -r -- "Enter 1 or 2: "
+    } > /dev/tty || ! IFS= read -r choice < /dev/tty; then
+        _powerlens_die "could not detect zsh or Oh My Zsh; set POWERLENS_SHELL_MODE=omz or POWERLENS_SHELL_MODE=zsh"
+        return 1
+    fi
+
+    case "$choice" in
+        1|omz) print -r -- omz ;;
+        2|zsh) print -r -- zsh ;;
+        *)
+            _powerlens_die "choose 1 (omz) or 2 (zsh), or set POWERLENS_SHELL_MODE=omz or POWERLENS_SHELL_MODE=zsh"
+            return 1
+            ;;
+    esac
 }
 
 _powerlens_default_install_dir() {
@@ -186,7 +261,6 @@ _powerlens_configure_plain_zsh() {
     local plugin_path="$install_dir/powerlens.plugin.zsh"
     local temporary_zshrc backup_path
 
-    mkdir -p -- "${zshrc:h}"
     [[ -e "$zshrc" ]] || : > "$zshrc"
 
     if grep -E '^[[:space:]]*(source|\\.)[[:space:]]+' "$zshrc" | grep -F -q -- "$plugin_path"; then
@@ -197,6 +271,7 @@ _powerlens_configure_plain_zsh() {
     cp -- "$zshrc" "$backup_path"
 
     temporary_zshrc=$(mktemp "${zshrc}.powerlens-tmp-XXXXXX") || return 1
+    _powerlens_zshrc_temporary_file=$temporary_zshrc
     if ! {
         cat -- "$zshrc"
         print
@@ -204,14 +279,15 @@ _powerlens_configure_plain_zsh() {
         print -r -- "source ${(qqq)plugin_path}"
         print -- "$POWERLENS_MARKER_END"
     } > "$temporary_zshrc"; then
-        rm -f -- "$temporary_zshrc"
+        _powerlens_cleanup_temporary_files
         return 1
     fi
 
     if ! mv -- "$temporary_zshrc" "$zshrc"; then
-        rm -f -- "$temporary_zshrc"
+        _powerlens_cleanup_temporary_files
         return 1
     fi
+    _powerlens_zshrc_temporary_file=""
 }
 
 _powerlens_configure_omz() {
@@ -230,6 +306,7 @@ _powerlens_configure_omz() {
     cp -- "$zshrc" "$backup_path"
 
     temporary_zshrc=$(mktemp "${zshrc}.powerlens-tmp-XXXXXX") || return 1
+    _powerlens_zshrc_temporary_file=$temporary_zshrc
     if ! awk -v marker_start="$POWERLENS_MARKER_START" -v marker_end="$POWERLENS_MARKER_END" '
         /^[[:space:]]*(source|\.)[[:space:]]/ {
             line = $0
@@ -242,21 +319,23 @@ _powerlens_configure_omz() {
         }
         { print }
     ' "$zshrc" > "$temporary_zshrc"; then
-        rm -f -- "$temporary_zshrc"
+        _powerlens_cleanup_temporary_files
         return 1
     fi
 
     if ! mv -- "$temporary_zshrc" "$zshrc"; then
-        rm -f -- "$temporary_zshrc"
+        _powerlens_cleanup_temporary_files
         return 1
     fi
+    _powerlens_zshrc_temporary_file=""
 }
 
 _powerlens_main() {
     local shell_mode zshrc repo_url install_dir
 
-    zshrc=${POWERLENS_ZSHRC:-"$HOME/.zshrc"}
+    zshrc=${POWERLENS_ZSHRC:-${ZDOTDIR:-$HOME}/.zshrc}
     repo_url=${POWERLENS_REPO_URL:-$POWERLENS_DEFAULT_REPO_URL}
+    _powerlens_check_preconditions "$zshrc" || return 1
     shell_mode=$(_powerlens_detect_shell_mode "$zshrc") || return 1
     install_dir=${POWERLENS_INSTALL_DIR:-$(_powerlens_default_install_dir "$shell_mode")}
 
@@ -269,4 +348,5 @@ _powerlens_main() {
     esac
 }
 
+trap _powerlens_cleanup_temporary_files EXIT HUP INT TERM
 _powerlens_main "$@"
