@@ -81,7 +81,7 @@ install_status=$?
 assert_eq "plain install exits zero" "$install_status" "0"
 assert_file "$case_dir/install/.git"
 assert_contains "$case_dir/home/.zshrc" \
-  "source $case_dir/install/powerlens.plugin.zsh"
+  "source \"$case_dir/install/powerlens.plugin.zsh\""
 assert_eq "managed block occurs once" \
   "$(count_fixed "$case_dir/home/.zshrc" \
     '# >>> PowerLens installer >>>')" \
