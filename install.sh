@@ -24,12 +24,58 @@ _powerlens_validate_install() {
     [[ -x "$install_dir/$binary" ]] || _powerlens_die "missing executable $binary in $install_dir"
 }
 
+_powerlens_normalize_repo_url() {
+    local repo_url=$1
+
+    repo_url=${repo_url%/}
+    repo_url=${repo_url%.git}
+    print -r -- "$repo_url"
+}
+
+_powerlens_validate_existing_repo() {
+    local install_dir=$1 repo_url=$2
+    local status_output actual_origin expected_origin normalized_actual_origin
+
+    [[ -d "$install_dir/.git" ]] || {
+        _powerlens_die "not a PowerLens Git repository: $install_dir"
+        return 1
+    }
+
+    status_output=$(git -C "$install_dir" status --porcelain) || {
+        _powerlens_die "not a PowerLens Git repository: $install_dir"
+        return 1
+    }
+    [[ -z "$status_output" ]] || {
+        _powerlens_die "local changes in $install_dir"
+        return 1
+    }
+
+    actual_origin=$(git -C "$install_dir" remote get-url origin) || {
+        _powerlens_die "unexpected origin in $install_dir"
+        return 1
+    }
+    expected_origin=$(_powerlens_normalize_repo_url "$repo_url")
+    normalized_actual_origin=$(_powerlens_normalize_repo_url "$actual_origin")
+    [[ "$normalized_actual_origin" == "$expected_origin" ]] || {
+        _powerlens_die "unexpected origin in $install_dir"
+        return 1
+    }
+
+    git -C "$install_dir" fetch -- origin main || return 1
+    git -C "$install_dir" merge-base --is-ancestor HEAD origin/main || {
+        _powerlens_die "cannot fast-forward $install_dir"
+        return 1
+    }
+    git -C "$install_dir" merge --ff-only origin/main || return 1
+    _powerlens_validate_install "$install_dir"
+}
+
 _powerlens_install_or_update() {
     local install_dir=$1 repo_url=$2
     local parent_dir=${install_dir:h} temporary_dir
 
     if [[ -e "$install_dir" || -L "$install_dir" ]]; then
-        _powerlens_validate_install "$install_dir"
+        _powerlens_validate_existing_repo "$install_dir" "$repo_url"
         return
     fi
 
