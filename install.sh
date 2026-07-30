@@ -61,7 +61,7 @@ _powerlens_validate_existing_repo() {
         return 1
     }
 
-    git -C "$install_dir" fetch -- origin main || return 1
+    git -C "$install_dir" fetch -- origin main:refs/remotes/origin/main || return 1
     git -C "$install_dir" merge-base --is-ancestor HEAD origin/main || {
         _powerlens_die "cannot fast-forward $install_dir"
         return 1

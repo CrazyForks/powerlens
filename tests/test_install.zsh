@@ -147,6 +147,8 @@ assert_eq "idempotent run creates no backup" \
   "1"
 
 print "\n=== Safe existing-install updates ==="
+git -C "$case_dir/install" config remote.origin.fetch \
+  'refs/heads/main:refs/remotes/origin/not-main'
 print 'update fixture' > "$origin/update-fixture"
 git -C "$origin" add update-fixture
 git -C "$origin" commit -m update-fixture >/dev/null
@@ -156,6 +158,9 @@ run_installer "$case_dir/home" "$case_dir/install" "${origin%.git}/" "$update_er
 update_status=$?
 
 assert_eq "update exits zero" "$update_status" "0"
+assert_eq "update refreshes origin/main from remote main" \
+  "$(git -C "$case_dir/install" rev-parse refs/remotes/origin/main)" \
+  "$(git -C "$origin" rev-parse main)"
 assert_eq "update fast-forwards to origin/main" \
   "$(git -C "$case_dir/install" rev-parse HEAD)" \
   "$(git -C "$origin" rev-parse main)"
