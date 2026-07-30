@@ -132,16 +132,28 @@ os.execvp(sys.argv[1], sys.argv[1:])
 
 run_installer() {
     local home_dir=$1 install_dir=$2 repo_url=$3 error_file=$4
+    local output_file=${5:-}
 
     mkdir -p -- "$home_dir"
-    env \
-      HOME="$home_dir" \
-      SHELL=/bin/zsh \
-      POWERLENS_SHELL_MODE=zsh \
-      POWERLENS_ZSHRC="$home_dir/.zshrc" \
-      POWERLENS_REPO_URL="$repo_url" \
-      POWERLENS_INSTALL_DIR="$install_dir" \
-      zsh "$PROJECT_ROOT/install.sh" 2>"$error_file"
+    if [[ -n "$output_file" ]]; then
+        env \
+          HOME="$home_dir" \
+          SHELL=/bin/zsh \
+          POWERLENS_SHELL_MODE=zsh \
+          POWERLENS_ZSHRC="$home_dir/.zshrc" \
+          POWERLENS_REPO_URL="$repo_url" \
+          POWERLENS_INSTALL_DIR="$install_dir" \
+          zsh "$PROJECT_ROOT/install.sh" >"$output_file" 2>"$error_file"
+    else
+        env \
+          HOME="$home_dir" \
+          SHELL=/bin/zsh \
+          POWERLENS_SHELL_MODE=zsh \
+          POWERLENS_ZSHRC="$home_dir/.zshrc" \
+          POWERLENS_REPO_URL="$repo_url" \
+          POWERLENS_INSTALL_DIR="$install_dir" \
+          zsh "$PROJECT_ROOT/install.sh" 2>"$error_file"
+    fi
 }
 
 PROJECT_ROOT=${0:A:h:h}
@@ -310,6 +322,33 @@ assert_eq "architecture validation leaves target parent unchanged" \
 assert_eq "architecture validation leaves no install temporary directory" \
   "$(count_install_temps "$architecture_parent")" "0"
 
+missing_plugin_source="$case_dir/missing-plugin-source"
+missing_plugin_origin="$case_dir/missing-plugin-origin.git"
+git clone --quiet -- "$origin" "$missing_plugin_source"
+git -C "$missing_plugin_source" rm -f -- powerlens.plugin.zsh >/dev/null
+git -C "$missing_plugin_source" commit -m missing-plugin >/dev/null
+git clone --quiet --bare "$missing_plugin_source" "$missing_plugin_origin"
+missing_plugin_home="$case_dir/missing-plugin-home"
+missing_plugin_parent="$missing_plugin_home/installs"
+missing_plugin_error="$case_dir/missing-plugin-error"
+mkdir -p -- "$missing_plugin_parent"
+env \
+  HOME="$missing_plugin_home" \
+  SHELL=/bin/zsh \
+  POWERLENS_SHELL_MODE=zsh \
+  POWERLENS_ZSHRC="$missing_plugin_home/.zshrc" \
+  POWERLENS_REPO_URL="$missing_plugin_origin" \
+  POWERLENS_INSTALL_DIR="$missing_plugin_parent/powerlens" \
+  zsh "$PROJECT_ROOT/install.sh" 2>"$missing_plugin_error"
+missing_plugin_status=$?
+
+assert_true "missing plugin file exits non-zero" \
+  '(( missing_plugin_status != 0 ))'
+assert_contains "$missing_plugin_error" "missing powerlens.plugin.zsh"
+assert_absent "$missing_plugin_parent/powerlens"
+assert_eq "missing plugin validation leaves no install temporary directory" \
+  "$(count_install_temps "$missing_plugin_parent")" "0"
+
 clone_failure_home="$case_dir/clone-failure-home"
 clone_failure_parent="$clone_failure_home/installs"
 clone_failure_error="$case_dir/clone-failure-error"
@@ -351,8 +390,33 @@ assert_eq "manual source install exits zero" "$manual_source_status" "0"
 assert_eq "equivalent manual source remains single" \
   "$(count_fixed "$manual_source_zshrc" "$manual_source_install/powerlens.plugin.zsh")" "1"
 
+comment_source_home="$case_dir/comment-source-home"
+comment_source_install="$comment_source_home/install"
+comment_source_zshrc="$comment_source_home/.zshrc"
+mkdir -p -- "$comment_source_home"
+print -r -- "source /dev/null # $comment_source_install/powerlens.plugin.zsh" \
+  > "$comment_source_zshrc"
+env \
+  HOME="$comment_source_home" \
+  SHELL=/bin/zsh \
+  POWERLENS_SHELL_MODE=zsh \
+  POWERLENS_ZSHRC="$comment_source_zshrc" \
+  POWERLENS_REPO_URL="$origin" \
+  POWERLENS_INSTALL_DIR="$comment_source_install" \
+  zsh "$PROJECT_ROOT/install.sh"
+comment_source_status=$?
+
+assert_eq "path mentioned only in a comment installs successfully" \
+  "$comment_source_status" "0"
+zsh -fc 'source "$1"; [[ "$POWERLENS_FIXTURE_LOADED" == 1 ]]' \
+  powerlens-test "$comment_source_zshrc"
+comment_source_load_status=$?
+assert_eq "comment path does not suppress real plugin source" \
+  "$comment_source_load_status" "0"
+
 print "\n=== Plain zsh installation ==="
 mkdir -p -- "$case_dir/home"
+install_output="$case_dir/install-output"
 env \
   HOME="$case_dir/home" \
   SHELL=/bin/zsh \
@@ -360,10 +424,16 @@ env \
   POWERLENS_ZSHRC="$case_dir/home/.zshrc" \
   POWERLENS_REPO_URL="$origin" \
   POWERLENS_INSTALL_DIR="$case_dir/install" \
-  zsh "$PROJECT_ROOT/install.sh"
+  zsh "$PROJECT_ROOT/install.sh" >"$install_output"
 install_status=$?
 
 assert_eq "plain install exits zero" "$install_status" "0"
+assert_contains "$install_output" "Installing PowerLens"
+assert_contains "$install_output" "Shell mode: plain zsh"
+assert_contains "$install_output" "Install directory: $case_dir/install"
+assert_contains "$install_output" "Startup file: $case_dir/home/.zshrc"
+assert_eq "successful install ends with activation command" \
+  "$(tail -n 1 "$install_output")" "exec zsh"
 assert_file "$case_dir/install/.git"
 assert_contains "$case_dir/home/.zshrc" \
   "source \"$case_dir/install/powerlens.plugin.zsh\""
@@ -399,10 +469,15 @@ git -C "$origin" add update-fixture
 git -C "$origin" commit -m update-fixture >/dev/null
 
 update_error="$case_dir/update-error"
-run_installer "$case_dir/home" "$case_dir/install" "${origin%.git}/" "$update_error"
+update_output="$case_dir/update-output"
+run_installer "$case_dir/home" "$case_dir/install" "${origin%.git}/" \
+  "$update_error" "$update_output"
 update_status=$?
 
 assert_eq "update exits zero" "$update_status" "0"
+assert_contains "$update_output" "Updating PowerLens"
+assert_eq "successful update ends with activation command" \
+  "$(tail -n 1 "$update_output")" "exec zsh"
 assert_eq "update refreshes origin/main from remote main" \
   "$(git -C "$case_dir/install" rev-parse refs/remotes/origin/main)" \
   "$(git -C "$origin" rev-parse main)"
@@ -426,6 +501,7 @@ assert_eq "modified tracked file preserves HEAD" \
 assert_eq "modified tracked file remains unchanged" \
   "$(<"$modified_dir/powerlens.zsh")" "$modified_contents_before"
 assert_contains "$modified_error" "local changes"
+assert_contains "$modified_error" "commit, revert, or move"
 
 untracked_dir="$case_dir/untracked-install"
 git clone --quiet -- "$origin" "$untracked_dir"
@@ -455,6 +531,7 @@ assert_true "non-Git target update exits non-zero" \
 assert_eq "non-Git target remains unchanged" \
   "$(<"$nongit_dir/keep")" "do not replace"
 assert_contains "$nongit_error" "not a PowerLens Git repository"
+assert_contains "$nongit_error" "move it aside or set POWERLENS_INSTALL_DIR"
 
 unexpected_origin_dir="$case_dir/unexpected-origin-install"
 git clone --quiet -- "$origin" "$unexpected_origin_dir"
@@ -471,6 +548,8 @@ assert_true "unexpected origin update exits non-zero" \
 assert_eq "unexpected origin preserves HEAD" \
   "$(git -C "$unexpected_origin_dir" rev-parse HEAD)" "$unexpected_origin_head_before"
 assert_contains "$unexpected_origin_error" "unexpected origin"
+assert_contains "$unexpected_origin_error" \
+  "move it aside or set POWERLENS_INSTALL_DIR"
 
 diverged_dir="$case_dir/diverged-install"
 git clone --quiet -- "$origin" "$diverged_dir"
@@ -490,6 +569,7 @@ assert_eq "non-ancestor local commit preserves HEAD" \
   "$(git -C "$diverged_dir" rev-parse HEAD)" "$diverged_head_before"
 assert_file "$diverged_dir/local-commit"
 assert_contains "$diverged_error" "cannot fast-forward"
+assert_contains "$diverged_error" "move it aside or set POWERLENS_INSTALL_DIR"
 
 print "\n=== Installation path with spaces ==="
 space_home="$case_dir/home with spaces"
@@ -588,6 +668,7 @@ assert_eq "existing plugins append creates no backup" \
 print "\n=== Ambiguous Oh My Zsh loaders ==="
 ambiguous_home="$case_dir/ambiguous-home"
 ambiguous_zshrc="$ambiguous_home/.zshrc"
+ambiguous_error="$case_dir/ambiguous-error"
 mkdir -p "$ambiguous_home"
 print 'plugins=(git)' > "$ambiguous_zshrc"
 print 'source "$ZSH/oh-my-zsh.sh"' >> "$ambiguous_zshrc"
@@ -600,13 +681,14 @@ env \
   ZSH_CUSTOM="$case_dir/ambiguous-custom" \
   POWERLENS_ZSHRC="$ambiguous_zshrc" \
   POWERLENS_REPO_URL="$origin" \
-  zsh "$PROJECT_ROOT/install.sh"
+  zsh "$PROJECT_ROOT/install.sh" 2>"$ambiguous_error"
 ambiguous_status=$?
 
 assert_true "ambiguous Oh My Zsh loaders exit non-zero" \
   '(( ambiguous_status != 0 ))'
 assert_eq "ambiguous Oh My Zsh startup file remains unchanged" \
   "$(<"$ambiguous_zshrc")" "$ambiguous_before"
+assert_contains "$ambiguous_error" "add plugins+=(powerlens) manually"
 
 print "\n=== Missing Oh My Zsh startup file ==="
 missing_zshrc_home="$case_dir/missing-zshrc-home"
