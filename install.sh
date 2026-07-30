@@ -62,12 +62,21 @@ _powerlens_validate_install() {
     case "$(uname -m)" in
         arm64) binary="bin/powerlens-fetch-arm64" ;;
         x86_64) binary="bin/powerlens-fetch-amd64" ;;
-        *) _powerlens_die "unsupported Mac architecture: $(uname -m)" ;;
+        *) _powerlens_die "unsupported Mac architecture: $(uname -m)"; return 1 ;;
     esac
 
-    [[ -f "$install_dir/powerlens.plugin.zsh" ]] || _powerlens_die "missing powerlens.plugin.zsh in $install_dir"
-    [[ -f "$install_dir/powerlens.zsh" ]] || _powerlens_die "missing powerlens.zsh in $install_dir"
-    [[ -x "$install_dir/$binary" ]] || _powerlens_die "missing executable $binary in $install_dir"
+    [[ -f "$install_dir/powerlens.plugin.zsh" ]] || {
+        _powerlens_die "missing powerlens.plugin.zsh in $install_dir"
+        return 1
+    }
+    [[ -f "$install_dir/powerlens.zsh" ]] || {
+        _powerlens_die "missing powerlens.zsh in $install_dir"
+        return 1
+    }
+    [[ -x "$install_dir/$binary" ]] || {
+        _powerlens_die "missing executable $binary in $install_dir"
+        return 1
+    }
 }
 
 _powerlens_normalize_repo_url() {
@@ -83,33 +92,33 @@ _powerlens_validate_existing_repo() {
     local status_output actual_origin expected_origin normalized_actual_origin
 
     [[ -d "$install_dir/.git" ]] || {
-        _powerlens_die "not a PowerLens Git repository: $install_dir"
+        _powerlens_die "not a PowerLens Git repository: $install_dir; move it aside or set POWERLENS_INSTALL_DIR to another path"
         return 1
     }
 
     status_output=$(git -C "$install_dir" status --porcelain) || {
-        _powerlens_die "not a PowerLens Git repository: $install_dir"
+        _powerlens_die "not a PowerLens Git repository: $install_dir; move it aside or set POWERLENS_INSTALL_DIR to another path"
         return 1
     }
     [[ -z "$status_output" ]] || {
-        _powerlens_die "local changes in $install_dir"
+        _powerlens_die "local changes in $install_dir; commit, revert, or move them before updating"
         return 1
     }
 
     actual_origin=$(git -C "$install_dir" remote get-url origin) || {
-        _powerlens_die "unexpected origin in $install_dir"
+        _powerlens_die "unexpected origin in $install_dir; move it aside or set POWERLENS_INSTALL_DIR to another path"
         return 1
     }
     expected_origin=$(_powerlens_normalize_repo_url "$repo_url")
     normalized_actual_origin=$(_powerlens_normalize_repo_url "$actual_origin")
     [[ "$normalized_actual_origin" == "$expected_origin" ]] || {
-        _powerlens_die "unexpected origin in $install_dir"
+        _powerlens_die "unexpected origin in $install_dir; move it aside or set POWERLENS_INSTALL_DIR to another path"
         return 1
     }
 
     git -C "$install_dir" fetch -- origin main:refs/remotes/origin/main || return 1
     git -C "$install_dir" merge-base --is-ancestor HEAD origin/main || {
-        _powerlens_die "cannot fast-forward $install_dir"
+        _powerlens_die "cannot fast-forward $install_dir; move it aside or set POWERLENS_INSTALL_DIR to another path"
         return 1
     }
     git -C "$install_dir" merge --ff-only origin/main || return 1
@@ -256,6 +265,21 @@ _powerlens_plugins_contain_powerlens() {
     ' "$zshrc"
 }
 
+_powerlens_plain_source_present() {
+    local zshrc=$1 plugin_path=$2 line source_path
+    local -a words
+
+    while IFS= read -r line || [[ -n "$line" ]]; do
+        words=(${(z)line})
+        (( ${#words} >= 2 )) || continue
+        [[ "$words[1]" == source || "$words[1]" == "." ]] || continue
+        source_path=${(Q)words[2]}
+        [[ "$source_path" == "$plugin_path" ]] && return 0
+    done < "$zshrc"
+
+    return 1
+}
+
 _powerlens_configure_plain_zsh() {
     local zshrc=$1 install_dir=$2
     local plugin_path="$install_dir/powerlens.plugin.zsh"
@@ -263,7 +287,7 @@ _powerlens_configure_plain_zsh() {
 
     [[ -e "$zshrc" ]] || : > "$zshrc"
 
-    if grep -E '^[[:space:]]*(source|\\.)[[:space:]]+' "$zshrc" | grep -F -q -- "$plugin_path"; then
+    if _powerlens_plain_source_present "$zshrc" "$plugin_path"; then
         return
     fi
 
@@ -296,7 +320,7 @@ _powerlens_configure_omz() {
 
     loader_count=$(_powerlens_omz_loader_count "$zshrc")
     if [[ "$loader_count" != 1 ]]; then
-        _powerlens_die "expected exactly one active Oh My Zsh loader in $zshrc"
+        _powerlens_die "expected exactly one active Oh My Zsh loader in $zshrc; add plugins+=(powerlens) manually before the loader"
         return 1
     fi
 
@@ -331,7 +355,7 @@ _powerlens_configure_omz() {
 }
 
 _powerlens_main() {
-    local shell_mode zshrc repo_url install_dir
+    local shell_mode shell_label zshrc repo_url install_dir action
 
     zshrc=${POWERLENS_ZSHRC:-${ZDOTDIR:-$HOME}/.zshrc}
     repo_url=${POWERLENS_REPO_URL:-$POWERLENS_DEFAULT_REPO_URL}
@@ -340,12 +364,29 @@ _powerlens_main() {
     install_dir=${POWERLENS_INSTALL_DIR:-$(_powerlens_default_install_dir "$shell_mode")}
 
     [[ "$install_dir" == /* ]] || install_dir="$PWD/$install_dir"
+    if [[ -e "$install_dir" || -L "$install_dir" ]]; then
+        action=Updating
+    else
+        action=Installing
+    fi
+    case "$shell_mode" in
+        omz) shell_label="Oh My Zsh" ;;
+        zsh) shell_label="plain zsh" ;;
+    esac
+
+    print -r -- "PowerLens: $action PowerLens"
+    print -r -- "PowerLens: Shell mode: $shell_label"
+    print -r -- "PowerLens: Install directory: $install_dir"
+    print -r -- "PowerLens: Startup file: $zshrc"
     _powerlens_install_or_update "$install_dir" "$repo_url"
 
     case "$shell_mode" in
         omz) _powerlens_configure_omz "$zshrc" "$install_dir" ;;
         zsh) _powerlens_configure_plain_zsh "$zshrc" "$install_dir" ;;
     esac
+
+    print -r -- "PowerLens: Ready. Restart your shell with:"
+    print -r -- "exec zsh"
 }
 
 trap _powerlens_cleanup_temporary_files EXIT HUP INT TERM
