@@ -172,9 +172,6 @@ _powerlens_configure_omz() {
     local zshrc=$1 install_dir=$2
     local loader_count temporary_zshrc backup_path
 
-    mkdir -p -- "${zshrc:h}"
-    [[ -e "$zshrc" ]] || : > "$zshrc"
-
     loader_count=$(_powerlens_omz_loader_count "$zshrc")
     if [[ "$loader_count" != 1 ]]; then
         _powerlens_die "expected exactly one active Oh My Zsh loader in $zshrc"

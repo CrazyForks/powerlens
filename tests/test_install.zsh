@@ -249,5 +249,25 @@ assert_true "ambiguous Oh My Zsh loaders exit non-zero" \
 assert_eq "ambiguous Oh My Zsh startup file remains unchanged" \
   "$(<"$ambiguous_zshrc")" "$ambiguous_before"
 
+print "\n=== Missing Oh My Zsh startup file ==="
+missing_zshrc_home="$case_dir/missing-zshrc-home"
+missing_zshrc="$missing_zshrc_home/.zshrc"
+mkdir -p "$missing_zshrc_home/.oh-my-zsh"
+: > "$missing_zshrc_home/.oh-my-zsh/oh-my-zsh.sh"
+
+env \
+  HOME="$missing_zshrc_home" \
+  SHELL=/bin/zsh \
+  ZSH_CUSTOM="$case_dir/missing-zshrc-custom" \
+  POWERLENS_ZSHRC="$missing_zshrc" \
+  POWERLENS_REPO_URL="$case_dir/origin" \
+  zsh "$PROJECT_ROOT/install.sh"
+missing_zshrc_status=$?
+
+assert_true "missing Oh My Zsh startup file exits non-zero" \
+  '(( missing_zshrc_status != 0 ))'
+assert_true "missing Oh My Zsh startup file remains absent" \
+  '[[ ! -e "$missing_zshrc" ]]'
+
 print "\nResults: ${PASS} passed, ${FAIL} failed"
 (( FAIL == 0 ))
