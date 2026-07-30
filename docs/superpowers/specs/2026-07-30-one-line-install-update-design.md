@@ -59,7 +59,10 @@ Framework detection uses the following order:
 1. a valid `POWERLENS_SHELL_MODE` override;
 2. Oh My Zsh indicators in the startup file, `$ZSH`, or
    `$HOME/.oh-my-zsh`;
-3. plain zsh when the user's login shell or current interpreter is zsh.
+3. plain zsh when the user's login shell is zsh.
+
+The interpreter running the installer is not evidence of the user's login
+shell because the documented command explicitly pipes the script to `zsh`.
 
 An explicit but unsupported mode fails. Conflicting or insufficient evidence
 does not cause a guessed configuration change. With a controlling terminal,
