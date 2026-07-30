@@ -72,7 +72,7 @@ _powerlens_configure_plain_zsh() {
         cat -- "$zshrc"
         print
         print -- "$POWERLENS_MARKER_START"
-        print -r -- "source \"${(q)install_dir}/powerlens.plugin.zsh\""
+        print -r -- "source ${(q)plugin_path}"
         print -- "$POWERLENS_MARKER_END"
     } > "$temporary_zshrc"; then
         rm -f -- "$temporary_zshrc"
