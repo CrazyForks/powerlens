@@ -380,6 +380,36 @@ assert_eq "read-only parent failure preserves startup file" \
 assert_absent "$readonly_parent_install"
 assert_contains "$readonly_parent_error" "startup file parent"
 
+noexecute_parent_home="$case_dir/noexecute-parent-home"
+noexecute_parent_dir="$noexecute_parent_home/config"
+noexecute_parent_zshrc="$noexecute_parent_dir/.zshrc"
+noexecute_parent_install="$case_dir/noexecute-parent-install"
+noexecute_parent_error="$case_dir/noexecute-parent-error"
+mkdir -p -- "$noexecute_parent_dir"
+print 'no-execute parent sentinel' > "$noexecute_parent_zshrc"
+noexecute_parent_before=$(<"$noexecute_parent_zshrc")
+chmod 200 "$noexecute_parent_dir"
+assert_true "mode 0200 startup parent is writable but not searchable" \
+  '[[ -w "$noexecute_parent_dir" && ! -x "$noexecute_parent_dir" ]]'
+env \
+  HOME="$noexecute_parent_home" \
+  SHELL=/bin/zsh \
+  POWERLENS_SHELL_MODE=zsh \
+  POWERLENS_ZSHRC="$noexecute_parent_zshrc" \
+  POWERLENS_REPO_URL="$origin" \
+  POWERLENS_INSTALL_DIR="$noexecute_parent_install" \
+  zsh "$PROJECT_ROOT/install.sh" 2>"$noexecute_parent_error"
+noexecute_parent_status=$?
+chmod 700 "$noexecute_parent_dir"
+
+assert_true "existing startup file with unsearchable parent exits non-zero" \
+  '(( noexecute_parent_status != 0 ))'
+assert_eq "unsearchable parent failure preserves startup file" \
+  "$(<"$noexecute_parent_zshrc")" "$noexecute_parent_before"
+assert_absent "$noexecute_parent_install"
+assert_contains "$noexecute_parent_error" \
+  "startup file parent must exist and be writable and searchable"
+
 zdotdir_home="$case_dir/zdotdir-home"
 zdotdir="$case_dir/zdotdir"
 zdotdir_install="$zdotdir_home/install"
