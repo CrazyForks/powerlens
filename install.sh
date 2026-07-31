@@ -61,8 +61,8 @@ _powerlens_check_preconditions() {
     fi
 
     parent_dir=${zshrc:h}
-    [[ -d "$parent_dir" && -w "$parent_dir" ]] || {
-        _powerlens_die "startup file parent must exist and be writable: $parent_dir"
+    [[ -d "$parent_dir" && -w "$parent_dir" && -x "$parent_dir" ]] || {
+        _powerlens_die "startup file parent must exist and be writable and searchable: $parent_dir"
         return 1
     }
 
