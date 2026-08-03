@@ -28,20 +28,26 @@ POWERLENS_ALERT_TEMP=80; POWERLENS_ALERT_FAN=4000
 
 source "${0:h}/../powerlens.zsh"
 
-print "\n=== SSH guard ==="
+print "\n=== SSH initialization ==="
 SSH_TTY="/dev/ttys001"
 local ssh_cache=$(mktemp -d)
 _POWERLENS_CACHE="$ssh_cache"
 _POWERLENS_PIDFILE="$_POWERLENS_CACHE/daemon.pid"
 _POWERLENS_COUNTER="$_POWERLENS_CACHE/sessions"
-_powerlens_bin=/usr/bin/true
+local ssh_fake_bin="$_POWERLENS_CACHE/fake_daemon"
+printf '#!/bin/sh\nexec sleep 300\n' > "$ssh_fake_bin"
+chmod +x "$ssh_fake_bin"
+_powerlens_bin="$ssh_fake_bin"
+unfunction precmd 2>/dev/null || true
+
 _powerlens_init
-local ssh_behavior=no
-[[ "$RPROMPT" == "$(_powerlens_degraded)" \
-  && ! -e "$_POWERLENS_PIDFILE" \
-  && ! -e "$_POWERLENS_COUNTER" ]] && ssh_behavior=yes
-assert_eq "SSH init uses degraded prompt without daemon state" \
-  "$ssh_behavior" "yes"
+sleep 0.1
+assert_eq "SSH init creates daemon state" \
+  "$(test -f $_POWERLENS_PIDFILE && test -f $_POWERLENS_COUNTER && echo yes || echo no)" "yes"
+assert_eq "SSH init registers the refresh hook" \
+  "$(( $+functions[precmd] ))" "1"
+
+_powerlens_stop_daemon
 rm -rf "$ssh_cache"
 unset SSH_TTY
 

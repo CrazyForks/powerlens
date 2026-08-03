@@ -23,7 +23,6 @@ PowerLens is a lightweight zsh prompt plugin that embeds live system metrics int
 | **Per-metric toggles** | Show or hide any metric independently |
 | **Singleton daemon** | N terminal windows → 1 daemon process, never more |
 | **Crash recovery** | Stale data (>10s) auto-detected; daemon restarted silently |
-| **SSH-aware** | Daemon skipped in remote shells; shows `--` gracefully |
 | **macOS 12+** | Apple Silicon (arm64) and Intel (amd64), no sudo required |
 
 ---
@@ -284,7 +283,7 @@ POWERLENS_ALERT_FAN=4000      # RPM
 | Charging | `🔋` replaced with `🔌` |
 | Desktop Mac (no battery) | Battery element hidden |
 | Daemon crashed | `⚡ --W 🔋 --% ⚙ --% 🧠 --% ↑ -- ↓ --` → daemon auto-restarted |
-| SSH remote shell | Same degraded display, no daemon launched |
+| SSH remote shell | Same as a local shell; shows live metrics from the remote Mac |
 | First network sample | `↑0.0M ↓0.0M` (no previous snapshot to diff against) |
 | Fanless Mac (e.g. M1/M2 Air) | Fan metric hidden automatically |
 
