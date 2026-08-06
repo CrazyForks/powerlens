@@ -3,6 +3,10 @@
 setopt pipefail
 unsetopt bg_nice
 
+# Installer markers (kept in sync with uninstall.sh) so fixtures can embed them.
+POWERLENS_MARKER_START="# >>> PowerLens installer >>>"
+POWERLENS_MARKER_END="# <<< PowerLens installer <<<"
+
 PASS=0
 FAIL=0
 
@@ -155,6 +159,46 @@ run_uninstaller "$daemon_home" "$daemon_home/install" "$daemon_error"
 assert_eq "daemon uninstall exits zero" "$?" "0"
 sleep 0.3
 assert_true "daemon process stopped" "! kill -0 $fake_pid 2>/dev/null"
+
+print "\n=== Clean .zshrc marker block ==="
+
+zshrc_home="$case_dir/zshrc-home"
+mkdir -p -- "$zshrc_home"
+{
+    print -r -- '# user content before'
+    print -r -- 'export EDITOR=vim'
+    print -r -- 'POWERLENS_MODE=compact'
+    print -r -- ''
+    print -r -- "$POWERLENS_MARKER_START"
+    print -r -- 'source "/some/install/powerlens.plugin.zsh"'
+    print -r -- "$POWERLENS_MARKER_END"
+    print -r -- '# user content after'
+} > "$zshrc_home/.zshrc"
+
+zshrc_error="$case_dir/zshrc-error"
+run_uninstaller "$zshrc_home" "$zshrc_home/install" "$zshrc_error"
+assert_eq "zshrc clean exits zero" "$?" "0"
+assert_missing "$zshrc_home/.zshrc" "$POWERLENS_MARKER_START"
+assert_missing "$zshrc_home/.zshrc" "source \"/some/install/powerlens.plugin.zsh\""
+assert_contains "$zshrc_home/.zshrc" '# user content before'
+assert_contains "$zshrc_home/.zshrc" '# user content after'
+assert_contains "$zshrc_home/.zshrc" 'POWERLENS_MODE=compact'
+# A backup was made.
+assert_true "zshrc backup created" \
+  '[[ -n "$zshrc_home"/.zshrc.powerlens-backup-*(N) ]]'
+
+print "\n=== Manual (unmarked) install left untouched ==="
+
+manual_home="$case_dir/manual-home"
+mkdir -p -- "$manual_home"
+{
+    print -r -- 'plugins=(git powerlens)'
+} > "$manual_home/.zshrc"
+manual_error="$case_dir/manual-error"
+run_uninstaller "$manual_home" "$manual_home/install" "$manual_error"
+assert_eq "manual install uninstall exits zero" "$?" "0"
+assert_contains "$manual_home/.zshrc" 'plugins=(git powerlens)'
+assert_contains "$manual_error" "powerlens"
 
 print "\nResults: ${PASS} passed, ${FAIL} failed"
 (( FAIL == 0 ))
