@@ -129,5 +129,32 @@ run_uninstaller "$symlink_home" "$symlink_home/install" "$symlink_error"
 assert_true "symlinked startup file exits non-zero" "(( $? != 0 ))"
 assert_contains "$symlink_error" "symbolic link"
 
+print "\n=== Stop daemon ==="
+
+daemon_home="$case_dir/daemon-home"
+daemon_cache="$daemon_home/.cache/powerlens"
+mkdir -p -- "$daemon_cache"
+: > "$daemon_home/.zshrc"
+
+# Fake daemon: a sleep renamed via exec -a so pkill -f matches "powerlens-fetch".
+fake_daemon_bin="$case_dir/powerlens-fetch-fake"
+{
+    print -r -- '#!/usr/bin/env zsh'
+    print -r -- 'exec -a powerlens-fetch sleep 60'
+} > "$fake_daemon_bin"
+chmod +x "$fake_daemon_bin"
+"$fake_daemon_bin" &!
+fake_pid=$!
+print -r -- "$fake_pid" > "$daemon_cache/daemon.pid"
+
+# Give the exec a moment to re-label the process.
+sleep 0.3
+
+daemon_error="$case_dir/daemon-error"
+run_uninstaller "$daemon_home" "$daemon_home/install" "$daemon_error"
+assert_eq "daemon uninstall exits zero" "$?" "0"
+sleep 0.3
+assert_true "daemon process stopped" "! kill -0 $fake_pid 2>/dev/null"
+
 print "\nResults: ${PASS} passed, ${FAIL} failed"
 (( FAIL == 0 ))

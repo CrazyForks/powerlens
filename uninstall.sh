@@ -42,10 +42,26 @@ _powerlens_check_preconditions() {
     fi
 }
 
+# Stop the PowerLens daemon: pidfile PID first, then any orphaned matches.
+_powerlens_stop_daemon() {
+    local cache_dir="${XDG_CACHE_HOME:-$HOME/.cache}/powerlens"
+    local pidfile="$cache_dir/daemon.pid"
+    local pid
+
+    if [[ -f "$pidfile" ]]; then
+        pid=$(< "$pidfile")
+        [[ -n "$pid" ]] && kill "$pid" 2>/dev/null || true
+    fi
+    # Machine-wide teardown: reap any cross-session or orphaned daemon.
+    pkill -f 'powerlens-fetch' 2>/dev/null || true
+    return 0
+}
+
 _powerlens_uninstall_main() {
     local zshrc
     zshrc=${POWERLENS_ZSHRC:-${ZDOTDIR:-$HOME}/.zshrc}
     _powerlens_check_preconditions "$zshrc" || return 1
+    _powerlens_stop_daemon
 }
 
 trap _powerlens_cleanup_temporary_files EXIT
