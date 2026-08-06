@@ -82,8 +82,6 @@ _powerlens_unmarked_powerlens_present() {
 # Remove the marked block (and one preceding blank line); back up first.
 _powerlens_clean_zshrc() {
     local zshrc=$1 backup_path temporary_zshrc line
-    local -a lines
-    local index last_kept_blank
 
     if _powerlens_unmarked_powerlens_present "$zshrc"; then
         print -u2 "PowerLens: found a manual 'powerlens' entry outside the installer markers in $zshrc; remove it yourself"

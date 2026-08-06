@@ -185,7 +185,7 @@ assert_contains "$zshrc_home/.zshrc" '# user content after'
 assert_contains "$zshrc_home/.zshrc" 'POWERLENS_MODE=compact'
 # A backup was made.
 assert_true "zshrc backup created" \
-  '[[ -n "$zshrc_home"/.zshrc.powerlens-backup-*(N) ]]'
+  '[[ -n "$(print -rl -- "$zshrc_home"/.zshrc.powerlens-backup-*(N))" ]]'
 
 print "\n=== Manual (unmarked) install left untouched ==="
 
