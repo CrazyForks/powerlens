@@ -145,6 +145,28 @@ xattr -d com.apple.quarantine bin/powerlens-fetch-amd64   # Intel
 
 ---
 
+## Uninstall
+
+Remove PowerLens with one command:
+
+```zsh
+curl -fsSL https://raw.githubusercontent.com/luyangkk/powerlens/main/uninstall.sh | zsh
+```
+
+This stops the background daemon, reverts the PowerLens block the installer
+added to `~/.zshrc` (saving a timestamped backup next to it), and removes the
+install and cache directories. It is safe to run more than once.
+
+Hand-written `POWERLENS_*` configuration lines and any manual (unmarked)
+`powerlens` plugin entry are left in place — the uninstaller warns about the
+latter so you can remove it yourself. Then start a fresh shell:
+
+```zsh
+exec zsh
+```
+
+---
+
 ## Configuration
 
 All options are set in `~/.zshrc` **before** the `plugins=(...)` line.
