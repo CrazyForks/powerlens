@@ -200,5 +200,35 @@ assert_eq "manual install uninstall exits zero" "$?" "0"
 assert_contains "$manual_home/.zshrc" 'plugins=(git powerlens)'
 assert_contains "$manual_error" "powerlens"
 
+print "\n=== Remove install and cache directories ==="
+
+full_home="$case_dir/full-home"
+full_install="$full_home/install/powerlens"
+full_cache="$full_home/.cache/powerlens"
+mkdir -p -- "$full_install" "$full_cache"
+: > "$full_install/powerlens.plugin.zsh"
+: > "$full_install/powerlens.zsh"
+: > "$full_cache/metrics.json"
+: > "$full_home/.zshrc"
+
+full_error="$case_dir/full-error"
+run_uninstaller "$full_home" "$full_install" "$full_error"
+assert_eq "full uninstall exits zero" "$?" "0"
+assert_absent "$full_install"
+assert_absent "$full_cache"
+
+print "\n=== Wrong install dir guarded ==="
+
+guard_home="$case_dir/guard-home"
+guard_install="$guard_home/not-powerlens"
+mkdir -p -- "$guard_install"
+: > "$guard_install/important.txt"   # no powerlens.plugin.zsh
+: > "$guard_home/.zshrc"
+guard_error="$case_dir/guard-error"
+run_uninstaller "$guard_home" "$guard_install" "$guard_error"
+assert_eq "guarded uninstall exits zero" "$?" "0"
+assert_file "$guard_install/important.txt"
+assert_contains "$guard_error" "$guard_install"
+
 print "\nResults: ${PASS} passed, ${FAIL} failed"
 (( FAIL == 0 ))

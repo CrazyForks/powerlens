@@ -129,12 +129,41 @@ _powerlens_clean_zshrc() {
     _powerlens_zshrc_temporary_file=""
 }
 
+# Delete the first candidate install dir that looks like a PowerLens checkout.
+_powerlens_remove_install_dir() {
+    local candidate
+    local -a candidates
+    candidates=(
+        "${POWERLENS_INSTALL_DIR:-}"
+        "${ZSH_CUSTOM:-${ZSH:-$HOME/.oh-my-zsh}/custom}/plugins/powerlens"
+        "${XDG_DATA_HOME:-$HOME/.local/share}/powerlens"
+    )
+    for candidate in "${candidates[@]}"; do
+        [[ -n "$candidate" && -d "$candidate" ]] || continue
+        if [[ -f "$candidate/powerlens.plugin.zsh" ]]; then
+            rm -rf -- "$candidate"
+            return 0
+        fi
+        print -u2 "PowerLens: $candidate is not a PowerLens install (no powerlens.plugin.zsh); leaving it in place"
+    done
+    return 0
+}
+
+# Delete the runtime cache directory.
+_powerlens_remove_cache_dir() {
+    local cache_dir="${XDG_CACHE_HOME:-$HOME/.cache}/powerlens"
+    [[ -d "$cache_dir" ]] && rm -rf -- "$cache_dir"
+    return 0
+}
+
 _powerlens_uninstall_main() {
     local zshrc
     zshrc=${POWERLENS_ZSHRC:-${ZDOTDIR:-$HOME}/.zshrc}
     _powerlens_check_preconditions "$zshrc" || return 1
     _powerlens_stop_daemon
     _powerlens_clean_zshrc "$zshrc"
+    _powerlens_remove_install_dir
+    _powerlens_remove_cache_dir
 }
 
 trap _powerlens_cleanup_temporary_files EXIT
