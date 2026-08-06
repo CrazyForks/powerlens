@@ -164,6 +164,10 @@ _powerlens_uninstall_main() {
     _powerlens_clean_zshrc "$zshrc"
     _powerlens_remove_install_dir
     _powerlens_remove_cache_dir
+    print -r -- "PowerLens: Uninstall complete."
+    print -r -- "PowerLens: Any hand-written POWERLENS_* lines were left in your startup file."
+    print -r -- "PowerLens: Restart your shell with:"
+    print -r -- "exec zsh"
 }
 
 trap _powerlens_cleanup_temporary_files EXIT

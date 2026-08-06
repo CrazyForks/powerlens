@@ -230,5 +230,19 @@ assert_eq "guarded uninstall exits zero" "$?" "0"
 assert_file "$guard_install/important.txt"
 assert_contains "$guard_error" "$guard_install"
 
+print "\n=== Idempotency on clean HOME ==="
+
+clean_home="$case_dir/clean-home"
+mkdir -p -- "$clean_home"
+: > "$clean_home/.zshrc"
+clean_error="$case_dir/clean-error"
+clean_output="$case_dir/clean-output"
+run_uninstaller "$clean_home" "$clean_home/install" "$clean_error" "$clean_output"
+assert_eq "clean-home uninstall exits zero" "$?" "0"
+assert_file "$clean_home/.zshrc"
+assert_true "no backup made on clean home" \
+  '[[ -z "$(print -rl -- "$clean_home"/.zshrc.powerlens-backup-*(N))" ]]'
+assert_contains "$clean_output" "exec zsh"
+
 print "\nResults: ${PASS} passed, ${FAIL} failed"
 (( FAIL == 0 ))
